@@ -24,6 +24,8 @@ class tunnel:
     
     def delivery_virus(self, virus):
         self.conn.sendall(virus)
+
+    
         
 
 c = tunnel()

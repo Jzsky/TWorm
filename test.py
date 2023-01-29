@@ -1,25 +1,27 @@
-import socket
-import sys
-import time
+import psutil, socket, struct
+import ipaddress
 
-IP = "0.0.0.0"
-PORT = 4444
+def get_network_info():
+    interfaces = []
+    interface_info = psutil.net_if_addrs()
+    for interface, addrs in interface_info.items():
+        for addr in addrs:
+            if addr.family == socket.AF_INET and not addr.address.startswith("127"):
+                interfaces.append((interface, addr.address, addr.netmask))
+    return interfaces
 
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind((IP, PORT))
-s.listen(1)
-print(f"[*] Listening on {IP}:{PORT}")
-conn, addr = s.accept()
-print(f"[*] Connection from {addr}")
+def get_ip_range(ip_address, subnet_mask):
+    try:
+        network = ipaddress.IPv4Network(f"{ip_address}/{subnet_mask}", strict=False)
+        return [str(ip) for ip in list(network.hosts())]
+    except Exception as e:
+        return []
 
-while True:
-    command = input("$ ")
-    
-    command += "\n"
-    if "exit" in command:
-        break
-    
-    conn.send(command.encode())
-    time.sleep(1)
-    ans = conn.recv(1024).decode()
-    sys.stdout.write(ans)
+network_info = get_network_info()
+for interface, ip, mask in network_info:
+    print("Interface:", interface)
+    print("IP address:", ip)
+    print("Subnet mask:", mask)
+    hosts = get_ip_range(ip,mask)
+    print(hosts)
+    print("---")
