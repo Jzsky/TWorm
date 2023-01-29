@@ -67,7 +67,7 @@ class sniff:
                 return {}
             return ostype
         except Exception as e:
-            print("Errors on OS Scan -> Possbile Privilege issues: {}".format(e))
+            print("Errors on OS Scan -> Possbile Privilege issues: g{}".format(e))
             return {}
 
     def get_interface_network(self):
