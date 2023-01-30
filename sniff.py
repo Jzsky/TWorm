@@ -24,7 +24,9 @@ class sniff:
         for interface, addrs in interface_info.items():
             for addr in addrs:
                 if addr.family == socket.AF_INET and not addr.address.startswith("127"):
-                    interfaces.append((interface, addr.address, addr.netmask))
+                    #Testing only on 192
+                    if addr.address.startswith("192"):
+                        interfaces.append((interface, addr.address, addr.netmask))
         return interfaces
     
     def get_ip_range(self, ip_address, subnet_mask):

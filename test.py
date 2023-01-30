@@ -6,8 +6,10 @@ def get_network_info():
     interface_info = psutil.net_if_addrs()
     for interface, addrs in interface_info.items():
         for addr in addrs:
+            #only testing with 192
             if addr.family == socket.AF_INET and not addr.address.startswith("127"):
-                interfaces.append((interface, addr.address, addr.netmask))
+                if addr.address.startswith("192"):
+                    interfaces.append((interface, addr.address, addr.netmask))
     return interfaces
 
 def get_ip_range(ip_address, subnet_mask):
@@ -22,6 +24,6 @@ for interface, ip, mask in network_info:
     print("Interface:", interface)
     print("IP address:", ip)
     print("Subnet mask:", mask)
-    hosts = get_ip_range(ip,mask)
-    print(hosts)
+    #hosts = get_ip_range(ip,mask)
+    #print(hosts)
     print("---")
