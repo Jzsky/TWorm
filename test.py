@@ -27,3 +27,5 @@ for interface, ip, mask in network_info:
     #hosts = get_ip_range(ip,mask)
     #print(hosts)
     print("---")
+    
+

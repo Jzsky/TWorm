@@ -79,7 +79,7 @@ class sniff:
         return self.hosts
 
     def is_vulnerable(self, cur, port_info):
-        
+
         cur.execute("")
         
         pass
