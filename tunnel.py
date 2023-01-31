@@ -1,5 +1,4 @@
 import socket, time
-import socketserver
 
 class tunnel:
     
@@ -49,6 +48,25 @@ class tunnel:
             return ""
         else:
             return ""
+        
+    def deploy(self, file):
+        serversocket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        host = socket.gethostname()
+        port = 8081
+        serversocket.bind((host,port))
+        serversocket.listen(5)
+        print("Deployment Server listening on port", port)
+        clientsocket,addr = serversocket.accept()
+        print("Got a connection from", addr)
+            
+        file_name = clientsocket.recv(1024).decode()
+        try:
+            with open(file_name, "rb") as f:
+                data = f.read()
+                clientsocket.sendall(data)
+        except FileNotFoundError:
+            clientsocket.sendall(b'File not found')
+        clientsocket.close()
  
             
 
