@@ -1,21 +1,44 @@
-import shutil
+import shutil, platform
 import os
 
 class replicate:
 
-    def __init__(self,data=None):
-        self.file = data
+    def __init__(self,filepath=None):
+        if not filepath == None:
+            self.data = open(filepath, 'rb')
+        else:
+            self.data = None
 
 
     def getfile(self):
-        return self.file
+        return self.data
+    
+    def self_replicate(self, target=platform.system()):
+        print("start")
+        try:
+            if target == "windows":
+                self.replicate_on_windows()
+            else:
+                self.replicate_on_linux()
+        except Exception as e:
+            print("replicate error: {}".format(e))
+            
+    def replicate_on_windows(self, source="container/tworm_windows.exe"):
+        with open(source, 'rb') as file:
+                with open('testhello2.exe', 'wb') as clone:
+                    clone.write(file.read())
+        print("finished")
+    
+    def replicate_on_linux(self, source="container/tworm_linux.elf"):
+        with open(source, 'rb') as file:
+                with open('testhello2.elf', 'wb') as clone:
+                    clone.write(file.read())
+        print("finished")
+        
+        
+            
 
-    def replicate_file(self, path="%temp%", ostype="windows"):
-        shutil.copy(__file__, 'temp/copied_script_name.py') 
-
-    def self_replicate(self):
-        pass
-
-
-r = replicate()
-r.self_replicate()
+# r = replicate()
+# r.self_replicate()
+        
+    

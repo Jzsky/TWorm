@@ -1,4 +1,6 @@
-import socket, time
+import socket, socketserver
+import http.server
+import os, time
 
 class tunnel:
     
@@ -8,7 +10,7 @@ class tunnel:
         self.sock.listen(5)
         print("listening on port {}".format(lport))
         self.conn, self.addr = self.sock.accept()
-        self.conn.settimeout(1.0)
+        self.conn.settimeout(5.0)
         print("connection from: {}",self.addr)
         
     def get_conn(self):
@@ -49,37 +51,40 @@ class tunnel:
         else:
             return ""
         
-    def deploy(self, file):
+   
+        
+    def deploy_server(self, data):
         serversocket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-        host = socket.gethostname()
+        host = "0.0.0.0"
         port = 8081
         serversocket.bind((host,port))
         serversocket.listen(5)
         print("Deployment Server listening on port", port)
         clientsocket,addr = serversocket.accept()
         print("Got a connection from", addr)
-            
-        file_name = clientsocket.recv(1024).decode()
         try:
-            with open(file_name, "rb") as f:
-                data = f.read()
-                clientsocket.sendall(data)
+            binary_content = data.read()
+            chunk_size = 1024
+            for i in range(0, len(binary_content), chunk_size):
+                clientsocket.sendall(binary_content[i:i+chunk_size])
         except FileNotFoundError:
             clientsocket.sendall(b'File not found')
+        except Exception:
+            print("error on deploy:")
         clientsocket.close()
- 
+        serversocket.close()
             
 
-c = tunnel()
+# c = tunnel()
 
-while True:
-    try:
-        command = input("$ ").encode()
-        if command == b"exit":
-            break
-        command+=b"\n"
-        c.sent_command(command)
-        print(c.get_response())
-    except TimeoutError as t:
-        print("no Response")
+# while True:
+#     try:
+#         command = input("$ ").encode()
+#         if command == b"exit":
+#             break
+#         command+=b"\n"
+#         c.sent_command(command)
+#         print(c.get_response())
+#     except TimeoutError as t:
+#         print("no Response")
         

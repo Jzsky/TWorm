@@ -1,31 +1,27 @@
-import psutil, socket, struct
-import ipaddress
+import socket, replicate
+r = replicate.replicate("container/testhello.exe")
+data= r.getfile()
 
-def get_network_info():
-    interfaces = []
-    interface_info = psutil.net_if_addrs()
-    for interface, addrs in interface_info.items():
-        for addr in addrs:
-            #only testing with 192
-            if addr.family == socket.AF_INET and not addr.address.startswith("127"):
-                if addr.address.startswith("192"):
-                    interfaces.append((interface, addr.address, addr.netmask))
-    return interfaces
-
-def get_ip_range(ip_address, subnet_mask):
-    try:
-        network = ipaddress.IPv4Network(f"{ip_address}/{subnet_mask}", strict=False)
-        return [str(ip) for ip in list(network.hosts())]
-    except Exception as e:
-        return []
-
-network_info = get_network_info()
-for interface, ip, mask in network_info:
-    print("Interface:", interface)
-    print("IP address:", ip)
-    print("Subnet mask:", mask)
-    #hosts = get_ip_range(ip,mask)
-    #print(hosts)
-    print("---")
+serversocket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+host = "0.0.0.0"
+port = 8081
+serversocket.bind((host,port))
+serversocket.listen(5)
+print("Deployment Server listening on port", port)
+clientsocket,addr = serversocket.accept()
+print("Got a connection from", addr)
+try:
+    binary_content = data.read()
+    chunk_size = 1024
+    for i in range(0, len(binary_content), chunk_size):
+        clientsocket.sendall(binary_content[i:i+chunk_size])
+except FileNotFoundError:
+    clientsocket.sendall(b'File not found')
+except Exception:
+    print("error on deploy:")
+clientsocket.close()
+serversocket.close()
+# with open("container/testhello.exe", 'rb') as f1:
+#     data = f1.read()
+#     print(data.__sizeof__())
     
-
