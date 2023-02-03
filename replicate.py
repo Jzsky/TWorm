@@ -13,7 +13,7 @@ class replicate:
     def getfile(self):
         return self.data
     
-    def self_replicate(self, target=platform.system()):
+    def self_replicate(self, target="windows"):
         print("start")
         try:
             if target == "windows":
@@ -23,7 +23,7 @@ class replicate:
         except Exception as e:
             print("replicate error: {}".format(e))
             
-    def replicate_on_windows(self, source="container/tworm_windows.exe"):
+    def replicate_on_windows(self, source="container/testhello.exe"):
         with open(source, 'rb') as file:
                 with open('testhello2.exe', 'wb') as clone:
                     clone.write(file.read())

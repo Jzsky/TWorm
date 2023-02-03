@@ -1,5 +1,5 @@
 import binascii
-import threading
+import threading, subprocess
 import armory.SMBGhost.exploit as exploit
 
 

