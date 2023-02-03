@@ -22,7 +22,6 @@ class deployment(threading.Thread):
             d = len(binary_content)
             for i in range(0, len(binary_content), chunk_size):
                 clientsocket.sendall(binary_content[i:i+chunk_size])
-                print("sending {} in {}".format(i,d))
         except FileNotFoundError:
             clientsocket.sendall(b'File not found')
         except Exception:
