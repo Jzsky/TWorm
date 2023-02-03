@@ -5,8 +5,8 @@ class deployment(threading.Thread):
 
     def __init__(self,host="0.0.0.0",port=8081, data=None):
         self.serversocket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-        self.host = "0.0.0.0"
-        self.port = 8081
+        self.host = host
+        self.port = port
         self.serversocket.bind((host,port))
         self.serversocket.listen(5)
         self.data = data
