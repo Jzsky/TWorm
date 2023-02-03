@@ -10,7 +10,7 @@ class replicate:
             self.data = None
 
 
-    def getfile(self):
+    def getfiledata(self):
         return self.data
     
     def self_replicate(self, target="windows"):

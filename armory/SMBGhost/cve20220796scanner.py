@@ -14,8 +14,10 @@ def is_vulnerable(target_ip):
     result = sock.recv(nb)
     
     if not result[68:70] == b"\x11\x03":
+        sock.close()
         return False
     if not result[70:72] == b"\x02\x00":
+        sock.close()
         return False
-
+    sock.close()
     return True
