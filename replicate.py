@@ -1,5 +1,5 @@
 import shutil, platform
-import os
+
 
 class replicate:
 
@@ -16,29 +16,23 @@ class replicate:
     def self_replicate(self, target="windows"):
         print("start")
         try:
-            if target == "windows":
+            if "windows" in target.lower():
                 self.replicate_on_windows()
-            else:
+            elif "linux" in target.lower():
                 self.replicate_on_linux()
+            else:
+                print("replicate failed - platform unidentify")
         except Exception as e:
             print("replicate error: {}".format(e))
             
-    def replicate_on_windows(self, source="container/testhello.exe"):
+    def replicate_on_windows(self, source="container/tworm.exe", path_name="C:\\Users\\tworm.exe"):
         with open(source, 'rb') as file:
-                with open('testhello2.exe', 'wb') as clone:
+                with open(path_name, 'wb') as clone:
                     clone.write(file.read())
         print("finished")
     
-    def replicate_on_linux(self, source="container/tworm_linux.elf"):
+    def replicate_on_linux(self, source="container/tworm.elf", path_name="/temp/tworm.elf"):
         with open(source, 'rb') as file:
-                with open('testhello2.elf', 'wb') as clone:
+                with open(path_name, 'wb') as clone:
                     clone.write(file.read())
         print("finished")
-        
-        
-            
-
-# r = replicate()
-# r.self_replicate()
-        
-    

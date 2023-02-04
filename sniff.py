@@ -24,7 +24,7 @@ class sniff:
         for interface, addrs in interface_info.items():
             for addr in addrs:
                 if addr.family == socket.AF_INET and not addr.address.startswith("127"):
-                    #Testing only on 192
+                    #Testing only on network interface 192.168.56
                     if addr.address.startswith("192.168.56"):
                         interfaces.append((interface, addr.address, addr.netmask))
         return interfaces
@@ -78,8 +78,5 @@ class sniff:
     def get_host_networks(self):
         return self.hosts
 
-    def is_vulnerable(self, cur, port_info):
-        
-        cur.execute("")
-        
+    def is_vulnerable(self, port_info):
         pass
