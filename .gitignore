@@ -6,3 +6,4 @@ temp/
 build/
 dist/
 tworm.exe.spec
+c2server.py
