@@ -3,9 +3,9 @@ import shutil, platform
 
 class replicate:
 
-    def __init__(self,name, filepath="C:\\Users"):
+    def __init__(self,name=None, fullpath=None):
         self.name = name
-        if not filepath == None:
+        if not name == None:
             self.data = open(name, 'rb')
         else:
             self.data = None

