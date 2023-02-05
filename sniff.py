@@ -59,7 +59,80 @@ class sniff:
             return version_result
         except Exception as e:
             print("Errors on port scanning - {}".format(e))
+            print("Try alternative method")
+            version_result = self.get_host_port_details_native(target.address, options="-p 1-1024")
             return {}
+    
+    def parse_service_details(self, response, service):
+        product = ""
+        version = ""
+        extrainfo = ""
+        method = ""
+        conf = ""
+        native = response
+
+        service["product"] = product
+        service["version"] = version
+        service["extrainfo"] = extrainfo
+        service["method"] = method
+        service["conf"] = conf
+        service["native"] = native
+        return service
+
+    def get_host_port_details_native(self, target:object, options)->dict:
+        try:
+            option = options.split(" ")
+            if "-p" == option[0]:
+                ports = option[1].split("-")
+            result = {target.address:{"osmatch":{},"ports":[]}}
+            for port in range(int(ports[0]),int(ports[1])+1):
+                try:
+                    sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+                    sock.setsockopt(socket.IPPROTO_IP, socket.IP_TTL, 64)
+                    conn = sock.connect_ex((target.address,port))
+                    ttl = sock.getsockopt(socket.IPPROTO_IP,socket.IP_TTL)
+                    if conn == 0:
+                        #print(socket.getservbyport(port))
+                        #print("Port {} is open".format(port))
+                        sock.send(b"8")
+                        
+                        response = sock.recv(1024).decode()
+                        
+                        #init service
+                        service = {
+                                    "name": socket.getservbyport(port),
+                                    "product": "",
+                                    "version": "",
+                                    "extrainfo": "",
+                                    "method": "",
+                                    "conf": "",
+                                    "native": ""
+                                    }
+
+                        paresed_service = self.parse_service_details(response, service)
+
+                        port_info = {
+                            "protocol": "tcp",
+                            "portid": str(port),
+                            "state": "open",
+                            "reason": "syn-ack",
+                            "reason_ttl": str(ttl),
+                            "service": paresed_service,
+                            "cpe": [
+                                {
+                                    "cpe": "",
+                                }
+                            ],
+                            "scripts": []
+                            }
+                        print(port_info)
+                    sock.close()
+                except socket.error as e:
+                    pass
+        except Exception as e:
+            print("alternative method failed: {}".format(e))
+        return {}
+            
 
     def get_host_os_details(self, target:object)->dict:
         try:
