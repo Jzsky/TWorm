@@ -133,7 +133,9 @@ class tunnel(threading.Thread):
             return None
 
 
-    def close_client_connection(self,client_ip):
+    def close_connection(self,client_ip):
         conn = self.get_connection(client_ip)
         if conn != None:
             conn.close()
+        self.sock.close()
+        

