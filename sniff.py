@@ -86,8 +86,10 @@ class sniff:
                 ports = option[1].split("-")
             result = {target.address:{"osmatch":{},"ports":[]}}
             for port in range(int(ports[0]),int(ports[1])+1):
+                print("scanning on port: {}".format(port))
                 try:
                     sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+                    sock.settimeout(1)
                     sock.setsockopt(socket.IPPROTO_IP, socket.IP_TTL, 64)
                     conn = sock.connect_ex((target.address,port))
                     ttl = sock.getsockopt(socket.IPPROTO_IP,socket.IP_TTL)
