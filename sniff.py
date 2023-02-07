@@ -89,7 +89,7 @@ class sniff:
                 print("scanning on port: {}".format(port))
                 try:
                     sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-                    sock.settimeout(0.2)
+                    sock.settimeout(0.08)
                     sock.setsockopt(socket.IPPROTO_IP, socket.IP_TTL, 64)
                     conn = sock.connect_ex((target.address,port))
                     ttl = sock.getsockopt(socket.IPPROTO_IP,socket.IP_TTL)
