@@ -51,17 +51,17 @@ class sniff:
                 live.append(host)
         return live
     
-    def get_host_port_details(self, target:object)->dict:
+    def get_host_port_details(self, target:object, scan_ports)->dict:
         try:
             nmap = nmap3.Nmap()
             #need to change if want to scan more ports
-            version_result = nmap.nmap_version_detection(target.address,args="-p 1-1024")
+            version_result = nmap.nmap_version_detection(target.address,args="-p {}".format(",".join(scan_ports)))
             return version_result
         except Exception as e:
             print("Errors on port scanning - {}".format(e))
             print("Try alternative method")
-            version_result = self.get_host_port_details_native(target, options="-p 1-1024")
-            return {}
+            version_result = self.get_host_port_details_native(target, options="-p {}".format(",".join(scan_ports)))
+            return version_result
     
     def parse_service_details(self, response, service):
         product = ""
@@ -83,26 +83,26 @@ class sniff:
         try:
             option = options.split(" ")
             if "-p" == option[0]:
-                ports = option[1].split("-")
+                ports = option[1].split(",")
             result = {target.address:{"osmatch":{},"ports":[]}}
-            for port in range(int(ports[0]),int(ports[1])+1):
-                print("scanning on port: {}".format(port))
+            for port in ports:
+                print("scanning on port: {}".format(int(port)))
                 try:
                     sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-                    sock.settimeout(0.08)
-                    sock.setsockopt(socket.IPPROTO_IP, socket.IP_TTL, 64)
-                    conn = sock.connect_ex((target.address,port))
-                    ttl = sock.getsockopt(socket.IPPROTO_IP,socket.IP_TTL)
+                    sock.settimeout(3)
+                    #sock.setsockopt(socket.IPPROTO_IP, socket.IP_TTL, 64)
+                    conn = sock.connect_ex((target.address,int(port)))
+                    #ttl = sock.getsockopt(socket.IPPROTO_IP,socket.IP_TTL)
                     if conn == 0:
                         #print(socket.getservbyport(port))
                         #print("Port {} is open".format(port))
-                        sock.send(b"8")
-                        
-                        response = sock.recv(1024).decode()
-                        
+                        try:
+                            response = sock.recv(1024).decode()
+                        except TimeoutError:
+                            response = ""
                         #init service
                         service = {
-                                    "name": socket.getservbyport(port),
+                                    "name": socket.getservbyport(int(port)),
                                     "product": "",
                                     "version": "",
                                     "extrainfo": "",
@@ -115,10 +115,10 @@ class sniff:
 
                         port_info = {
                             "protocol": "tcp",
-                            "portid": str(port),
+                            "portid": port,
                             "state": "open",
                             "reason": "syn-ack",
-                            "reason_ttl": str(ttl),
+                            #"reason_ttl": str(ttl),
                             "service": paresed_service,
                             "cpe": [
                                 {
@@ -127,10 +127,11 @@ class sniff:
                             ],
                             "scripts": []
                             }
-                        print(port_info)
+                        result[target.address]['ports'].append(port_info)
                     sock.close()
                 except socket.error as e:
-                    pass
+                    print("socket error: {}".format(e))
+            return result
         except Exception as e:
             print("alternative method failed: {}".format(e))
         return {}

