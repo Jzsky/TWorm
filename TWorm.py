@@ -55,8 +55,20 @@ def main():
                             
                             infection.join()
                             time.sleep(2)
+                            # if infection.is_alive():
+                            #     # If the thread is still alive, it has exceeded the timeout
+                            #     # Terminate the thread
+                            #     print('Thread exceeded timeout, terminating...')
+                            #     infection.stop()
+                            #     tunnel.sto
+                            # else:
+                            #     # If the thread has finished before the timeout, it has completed successfully
+                            #     print('infection on {} completed successfully'.format(target_ip.address))
                             #tunnel.close_connection(target_ip.address)
                             tunnel.join()
+                            
+                            
+                            
                             
         sock.close()    
                             
