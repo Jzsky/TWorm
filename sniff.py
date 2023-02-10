@@ -32,8 +32,8 @@ class sniff:
             for addr in addrs:
                 #skip if it is 127 loop back ip address
                 if addr.family == socket.AF_INET and not addr.address.startswith("127"):
-                    #in testing environment - only testing on network interface 192.168.56
-                    if addr.address.startswith("192.168.56"):
+                    #in testing environment - only testing on network interface 192.168
+                    if addr.address.startswith("192.168"):
                         #add the ip addresses on the list
                         interfaces.append((interface, addr.address, addr.netmask))
         return interfaces
