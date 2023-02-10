@@ -92,7 +92,7 @@ def main():
 #make a clone of the file, file_path=src file, filename=dest file
 def clone(file_path, filename):
     try:
-        ostype = platform.system()
+        ostype = platform.system().lower()
         if ostype == "windows":
             default_path="C:/Users/Public/Documents"
         else:

